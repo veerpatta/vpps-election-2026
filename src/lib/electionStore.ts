@@ -490,8 +490,38 @@ export function getDashboardStats() {
   }
 }
 
+/**
+ * Wipe ALL stored data and reseed from the bundled demo defaults.
+ * Removes any voters or candidates the admin added by hand.
+ */
 export function resetDemoData() {
   const store = createDefaultStore()
+  writeStore(store)
+  writeVoterVersion(OFFICIAL_VOTER_DATASET_VERSION)
+  return store
+}
+
+/**
+ * Reset the election state without touching the voter or candidate lists.
+ * Clears every recorded vote, marks every voter as "not voted", and reopens
+ * voting. Use this on election morning when the practice runs are over and
+ * the real ballot is about to start.
+ */
+export function resetElectionRun() {
+  const store = readStore()
+  const timestamp = new Date().toISOString()
+  store.votes = []
+  store.voters = store.voters.map((voter) => ({
+    ...voter,
+    hasVoted: false,
+    votedAt: undefined,
+  }))
+  store.election = {
+    ...store.election,
+    status: 'voting_open',
+    resultsPublished: false,
+    updatedAt: timestamp,
+  }
   writeStore(store)
   return store
 }
