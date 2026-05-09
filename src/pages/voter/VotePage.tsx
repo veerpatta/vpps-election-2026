@@ -5,6 +5,7 @@ import { BrandHeader } from '../../components/brand/BrandHeader'
 import { BrandLogo } from '../../components/brand/BrandLogo'
 import { HouseBadge } from '../../components/house/HouseBadge'
 import { HouseHeroCard } from '../../components/house/HouseHeroCard'
+import { HouseShowcase } from '../../components/house/HouseShowcase'
 import { CandidateCard } from '../../components/voter/CandidateCard'
 import { Button, Card, PageBackground } from '../../components/ui/primitives'
 import { getBallotPosts, getVotingCandidates, submitVote, validateVotingId } from '../../lib/electionStore'
@@ -93,7 +94,7 @@ export function VotePage() {
       <main className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-6 sm:px-6">
         <AnimatePresence mode="wait">
           {step === 'welcome' ? (
-            <motion.section key="welcome" {...pageMotion} className="mx-auto grid w-full max-w-3xl place-items-center text-center">
+            <motion.section key="welcome" {...pageMotion} className="mx-auto grid w-full max-w-5xl place-items-center text-center">
               <BrandLogo variant="full" animated className="h-40 w-full max-w-sm sm:h-48 sm:max-w-md" />
               <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.45 }} className="mt-8 text-4xl font-black leading-tight text-vpps-navy sm:text-6xl">
                 VPPS Student Council Election 2026
@@ -102,6 +103,7 @@ export function VotePage() {
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.34 }} className="mt-6 text-lg font-semibold text-slate-600">
                 अपना नेता चुनें • Vote with Responsibility
               </motion.p>
+              <HouseShowcase compact className="mt-8 w-full text-left" />
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }}>
                 <Button type="button" onClick={() => setStep('id')} className="mt-10 min-w-48 text-base">
                   <Vote size={20} />
@@ -155,22 +157,29 @@ export function VotePage() {
                 </div>
               </div>
               {voter ? (
-                <div className="mb-5 flex flex-wrap items-center gap-3 rounded-3xl border border-white/80 bg-white/85 p-4 shadow-sm">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-vpps-navy/10 px-3 py-1.5 text-xs font-black text-vpps-navy">
-                    <UserCheck size={14} />
-                    {voter.voterName}
-                  </span>
-                  {voter.voterType === 'student' ? (
-                    <>
-                      <span className="text-sm font-bold text-slate-600">{voter.classSection}</span>
-                      <HouseBadge house={voter.house} size="md" />
-                    </>
-                  ) : (
-                    <span className="rounded-full bg-vpps-gold/20 px-3 py-1.5 text-xs font-black text-amber-800">Teacher - all house captain posts</span>
-                  )}
+                <div className="mb-5 rounded-3xl border border-white/80 bg-white/90 p-4 shadow-sm backdrop-blur">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-vpps-navy/10 px-3 py-1.5 text-xs font-black text-vpps-navy">
+                      <UserCheck size={14} />
+                      Welcome, {voter.voterName}
+                    </span>
+                    {voter.voterType === 'student' ? (
+                      <>
+                        <span className="text-sm font-bold text-slate-600">Class: {voter.classSection}</span>
+                        <HouseBadge house={voter.house} size="md" showHeroName />
+                      </>
+                    ) : (
+                      <span className="rounded-full bg-vpps-gold/20 px-3 py-1.5 text-xs font-black text-amber-800">Teacher Voter</span>
+                    )}
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-slate-600">
+                    {voter.voterType === 'student'
+                      ? 'Only your own House Captain screen will appear after the general posts.'
+                      : 'You will see all four House Captain screens after the general posts.'}
+                  </p>
                 </div>
               ) : null}
-              {currentHouse ? <HouseHeroCard house={currentHouse} className="mb-5" /> : null}
+              {currentHouse ? <HouseHeroCard house={currentHouse} selected className="mb-5" /> : null}
               {message ? <p className="mb-4 rounded-2xl bg-vpps-warning/10 px-4 py-3 text-sm font-bold text-orange-700">{message}</p> : null}
               {candidates.length === 0 ? (
                 <Card className="border-vpps-danger/20 bg-red-50 text-sm font-bold text-red-700">No approved active candidates are available for this post. Please contact the election desk.</Card>

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Download, FileSpreadsheet, Filter, Printer, RefreshCcw, RotateCcw, Search, Upload, UserPlus, X } from 'lucide-react'
 import { HouseBadge } from '../../components/house/HouseBadge'
+import { HouseLogo } from '../../components/house/HouseLogo'
 import { Button, Card, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
 import {
   downloadVoterTemplateCsv,
@@ -205,7 +206,7 @@ export function VoterManagementPage() {
       </Card>
 
       <Card className="no-print mt-6">
-        <div className="grid gap-4 lg:grid-cols-[0.8fr_0.8fr_1fr_1.4fr] lg:items-end">
+        <div className="grid gap-4 lg:grid-cols-[0.8fr_1.4fr_1fr_1.4fr] lg:items-end">
           <Field label="Voter Type">
             <Select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as VoterTypeFilter)}>
               <option value="all">All</option>
@@ -213,12 +214,37 @@ export function VoterManagementPage() {
               <option value="teacher">Teachers</option>
             </Select>
           </Field>
-          <Field label="House">
-            <Select value={houseFilter} onChange={(event) => setHouseFilter(event.target.value as HouseFilter)}>
-              <option value="all">All</option>
-              {houseOrder.map((house) => <option key={house} value={house}>{houses[house].colorName}</option>)}
-            </Select>
-          </Field>
+          <div className="grid gap-2 text-sm font-bold text-vpps-navy">
+            <span>House</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setHouseFilter('all')}
+                className={`inline-flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-sm font-black transition ${houseFilter === 'all' ? 'border-vpps-richGold bg-vpps-gold/20 text-vpps-navy' : 'border-vpps-navy/10 bg-white text-slate-600'}`}
+              >
+                All
+              </button>
+              {houseOrder.map((house) => {
+                const meta = houses[house]
+                return (
+                  <button
+                    key={house}
+                    type="button"
+                    onClick={() => setHouseFilter(house)}
+                    className="inline-flex min-h-12 items-center gap-2 rounded-2xl border bg-white px-3 text-sm font-black transition"
+                    style={{
+                      borderColor: houseFilter === house ? meta.primaryColor : meta.borderColor,
+                      color: houseFilter === house ? meta.primaryColor : '#475569',
+                      boxShadow: houseFilter === house ? `0 10px 25px ${meta.accentColor}26` : undefined,
+                    }}
+                  >
+                    <HouseLogo house={house} size="sm" />
+                    {meta.colorName}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <Field label="Search">
             <TextInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, class, roll, Voting ID" />
           </Field>
@@ -239,7 +265,7 @@ export function VoterManagementPage() {
             <div><p className="font-black">{voter.voterName}</p><p className="text-xs font-semibold text-slate-500">{voter.rollNumber}</p></div>
             <p className="text-sm font-bold capitalize">{voter.voterType}</p>
             <p className="text-sm text-slate-600">{voter.classSection || voter.departmentOrRole || '-'}</p>
-            <div>{voter.house && voter.house !== 'all' ? <HouseBadge house={voter.house} size="sm" /> : <span className="text-sm font-semibold text-slate-500">Teacher / all houses</span>}</div>
+            <div>{voter.house && voter.house !== 'all' ? <HouseBadge house={voter.house} size="sm" /> : <HouseBadge house="all" size="sm" />}</div>
             <p className="text-lg font-black tracking-[0.18em]">{voter.votingId}</p>
             <div className="flex flex-wrap gap-2">
               <StatusPill tone={voter.hasVoted ? 'green' : 'orange'}>{voter.hasVoted ? 'Voted' : 'Not Voted'}</StatusPill>

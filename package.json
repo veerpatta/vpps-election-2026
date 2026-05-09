@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "import:house-assets": "node scripts/import-house-assets.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

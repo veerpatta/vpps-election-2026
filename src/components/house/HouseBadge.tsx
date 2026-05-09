@@ -1,47 +1,65 @@
-import { Shield } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Flag } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { getHouseMeta } from '../../lib/houses'
 import type { HouseId } from '../../types/election'
+import { HouseLogo } from './HouseLogo'
 
 interface HouseBadgeProps {
   house?: HouseId | 'all'
-  size?: 'sm' | 'md' | 'lg'
+  showLogo?: boolean
+  showHeroName?: boolean
   showHero?: boolean
+  size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
-export function HouseBadge({ house, size = 'md', showHero = true, className }: HouseBadgeProps) {
+export function HouseBadge({
+  house,
+  size = 'md',
+  showLogo = true,
+  showHeroName,
+  showHero,
+  className,
+}: HouseBadgeProps) {
+  const reducedMotion = useReducedMotion()
   const meta = getHouseMeta(house)
+  const shouldShowHeroName = showHeroName ?? showHero ?? true
+  const sizes = {
+    sm: 'gap-1.5 px-2.5 py-1 text-[0.68rem]',
+    md: 'gap-2 px-3 py-1.5 text-xs',
+    lg: 'gap-2.5 px-4 py-2 text-sm',
+  }
+  const logoSize = size === 'lg' ? 'md' : 'sm'
 
   if (!meta) {
     return (
-      <span className={cn('inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600', className)}>
-        <Shield size={14} />
-        All Houses
-      </span>
+      <motion.span
+        initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
+        animate={reducedMotion ? undefined : { opacity: 1, scale: 1 }}
+        className={cn('inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600', className)}
+      >
+        <Flag size={14} />
+        Teacher voter
+      </motion.span>
     )
   }
 
-  const sizes = {
-    sm: 'px-2.5 py-1 text-[0.68rem]',
-    md: 'px-3 py-1.5 text-xs',
-    lg: 'px-4 py-2 text-sm',
-  }
-
   return (
-    <span
-      className={cn('inline-flex items-center gap-2 rounded-full border font-black shadow-sm', sizes[size], className)}
+    <motion.span
+      initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
+      animate={reducedMotion ? undefined : { opacity: 1, scale: 1 }}
+      transition={{ duration: 0.18 }}
+      className={cn('inline-flex max-w-full items-center rounded-full border font-black shadow-sm', sizes[size], className)}
       style={{
         backgroundColor: meta.softColor,
         borderColor: meta.borderColor,
         color: meta.primaryColor,
       }}
     >
-      <span className="grid h-5 w-5 place-items-center rounded-full text-white" style={{ backgroundColor: meta.primaryColor }}>
-        <Shield size={size === 'lg' ? 14 : 12} />
-      </span>
-      <span>{meta.colorName} - {meta.name}</span>
-      {showHero ? <span className="font-semibold opacity-80">({meta.hero})</span> : null}
-    </span>
+      {showLogo ? <HouseLogo house={house} size={logoSize} /> : null}
+      <span className="truncate">{meta.colorName} - {meta.name}</span>
+      {shouldShowHeroName ? <span className="hidden font-semibold opacity-80 sm:inline">({meta.heroName})</span> : null}
+    </motion.span>
   )
 }

@@ -2,8 +2,9 @@ import { CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { Candidate } from '../../types/election'
 import { initials, cn } from '../../lib/utils'
-import { isHouseCaptainPost } from '../../lib/houses'
+import { getHouseMeta, isHouseCaptainPost } from '../../lib/houses'
 import { HouseBadge } from '../house/HouseBadge'
+import { HouseLogo } from '../house/HouseLogo'
 import { Button, Card } from '../ui/primitives'
 
 interface CandidateCardProps {
@@ -13,9 +14,26 @@ interface CandidateCardProps {
 }
 
 export function CandidateCard({ candidate, selected, onSelect }: CandidateCardProps) {
+  const houseMeta = candidate.house ? getHouseMeta(candidate.house) : undefined
+  const isHouseCandidate = isHouseCaptainPost(candidate.post) && houseMeta
+
   return (
     <motion.div animate={{ scale: selected ? 1.02 : 1 }} whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 260, damping: 22 }}>
-      <Card className={cn('relative h-full overflow-hidden border-2 transition', selected ? 'border-vpps-gold shadow-vpps-gold/25' : 'border-white/80')}>
+      <Card
+        className={cn(
+          'relative h-full overflow-hidden border-2 transition',
+          selected ? 'shadow-2xl' : 'border-white/80',
+          isHouseCandidate ? 'bg-gradient-to-br' : '',
+          houseMeta?.softGradientClass,
+        )}
+        style={{
+          borderColor: selected ? houseMeta?.primaryColor ?? '#f4b400' : undefined,
+          boxShadow: selected ? `0 22px 50px ${houseMeta?.accentColor ?? '#f4b400'}33` : undefined,
+        }}
+      >
+        {isHouseCandidate ? (
+          <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: houseMeta.accentColor }} />
+        ) : null}
         {selected ? (
           <div className="absolute right-4 top-4 rounded-full bg-vpps-success p-1 text-white">
             <CheckCircle2 size={22} />
@@ -33,6 +51,7 @@ export function CandidateCard({ candidate, selected, onSelect }: CandidateCardPr
               <HouseBadge house={candidate.house} size="sm" className="mt-3" />
             ) : null}
           </div>
+          {isHouseCandidate ? <HouseLogo house={candidate.house} size="md" className="hidden sm:grid" /> : null}
         </div>
         <p className="mt-5 rounded-2xl bg-vpps-soft p-4 text-sm font-semibold leading-6 text-slate-700">{candidate.slogan}</p>
         <Button type="button" className="mt-5 w-full" variant={selected ? 'secondary' : 'primary'} onClick={onSelect}>

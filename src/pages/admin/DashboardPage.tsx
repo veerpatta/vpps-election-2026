@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { CheckCircle2, Clock3, GraduationCap, Shield, Trophy, UserCheck, Users, Vote } from 'lucide-react'
+import { HouseShowcase } from '../../components/house/HouseShowcase'
 import { Card, StatusPill } from '../../components/ui/primitives'
-import { getDashboardStats } from '../../lib/electionStore'
+import { getDashboardStats, getHouseStats } from '../../lib/electionStore'
+import { houses } from '../../lib/houses'
 import { formatStatus } from '../../lib/utils'
 
 function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
@@ -17,6 +19,7 @@ function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
 
 export function DashboardPage() {
   const [stats] = useState(() => getDashboardStats())
+  const [houseStats] = useState(() => getHouseStats())
   const cards = [
     { label: 'Voting Status', value: formatStatus(stats.election.status), icon: Shield, tone: 'gold' as const },
     { label: 'Total Voters', value: stats.totalVoters, icon: Users },
@@ -48,6 +51,32 @@ export function DashboardPage() {
             </motion.div>
           )
         })}
+      </div>
+      <div className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+        <div>
+          <h2 className="text-xl font-black text-vpps-navy">House Showcase</h2>
+          <HouseShowcase compact className="mt-4" />
+        </div>
+        <Card>
+          <h2 className="text-xl font-black text-vpps-navy">House Voter Status</h2>
+          <div className="mt-4 grid gap-3">
+            {houseStats.map((row) => {
+              const meta = houses[row.house]
+              const pct = row.voters ? Math.round((row.voted / row.voters) * 100) : 0
+              return (
+                <div key={row.house} className="rounded-2xl border p-3" style={{ borderColor: meta.borderColor, backgroundColor: meta.softColor }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-black" style={{ color: meta.primaryColor }}>{meta.name}</p>
+                    <StatusPill tone="navy">{row.voted}/{row.voters}</StatusPill>
+                  </div>
+                  <div className="mt-3 h-2 rounded-full bg-white">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.primaryColor }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
       </div>
     </section>
   )

@@ -192,18 +192,33 @@ Use **Export Voting ID List** to download:
 
 Use **Print List** for a clean printable class/staff distribution list.
 
-## House Hero Images
+## House Image Assets
 
-Optional local house hero images go in `public/houses/`:
+Run:
 
-- `rana-pratap.png`
-- `rana-kumbha.png`
-- `bappa-rawal.png`
-- `rana-sanga.png`
+```powershell
+npm run import:house-assets
+```
+
+The original generated filenames do not need to be renamed manually. Place them in `incoming-house-assets/`, the project root, `assets/`, `public/`, or the user Downloads folder, then run `npm run import:house-assets`.
+
+Canonical hero paths:
+
+- `public/houses/heroes/rana-pratap-hero.png`
+- `public/houses/heroes/rana-kumbha-hero.png`
+- `public/houses/heroes/bappa-rawal-hero.png`
+- `public/houses/heroes/rana-sanga-hero.png`
+
+Canonical logo paths:
+
+- `public/houses/logos/rana-pratap-house-logo.png`
+- `public/houses/logos/rana-kumbha-house-logo.png`
+- `public/houses/logos/bappa-rawal-house-logo.png`
+- `public/houses/logos/rana-sanga-house-logo.png`
 
 Do not hotlink random web images. Use only school-approved images or public-domain images with permission suitable for school election use.
 
-If an image is missing, the app shows a shield-style fallback and does not crash.
+If any image is missing or fails to load, the app shows a shield or flag fallback and does not crash.
 
 ## Firebase Console Checklist
 

@@ -27,7 +27,7 @@ export function Button({ className, variant = 'primary', ...props }: ButtonProps
 
 export function Card({ children, className, ...props }: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
   return (
-    <div className={cn('rounded-[1.65rem] border border-white/80 bg-white/95 p-5 shadow-soft', className)} {...props}>
+    <div className={cn('rounded-[1.65rem] border border-white/80 bg-white/90 p-5 shadow-soft backdrop-blur', className)} {...props}>
       {children}
     </div>
   )
@@ -99,10 +99,10 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
 
 export function PageBackground({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen bg-vpps-soft text-vpps-navy">
+    <div className="min-h-screen bg-[linear-gradient(135deg,#f7f8fb_0%,#ffffff_42%,#eef3f8_100%)] text-vpps-navy">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-[-15%] h-96 w-96 rounded-full bg-vpps-gold/15 blur-3xl" />
-        <div className="absolute right-[-20%] top-24 h-[28rem] w-[28rem] rounded-full bg-vpps-navy/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(244,180,0,0.16),transparent)]" />
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-[linear-gradient(270deg,rgba(11,31,58,0.08),transparent)]" />
       </div>
       <div className="relative">{children}</div>
     </div>
