@@ -342,6 +342,38 @@ Put the official Veer Patta Senior Secondary School logo files in `public/brand/
 
 The app uses these assets on the welcome screen, voting screens, admin login, admin header, favicon, thank-you screen, and result print sheet. If a logo image is missing or fails to load, the UI falls back to clean VPPS/school-name text instead of crashing.
 
+## Candidate Photo Workflow
+
+Put the candidate Excel workbook with embedded photos in `incoming-candidates/`. Put the school uniform reference image in the same folder, preferably named `uniform-reference.jpg`.
+
+Run the workflow in this order:
+
+```bash
+npm run extract:candidate-photos
+npm run generate:candidate-portraits
+npm run import:real-candidates
+```
+
+The extraction step reads the candidate sheet, maps embedded photos by worksheet row, saves source images to `public/candidates/originals/`, writes `data/candidate-photo-mapping.json`, and writes `exports/candidate-photo-mapping.csv`.
+
+Discipline, Cultural, and Sports candidates are imported as separate Boys and Girls voting posts. Workbook values such as `Discipline Captain Boy`, `Dicipline` + `Male`, `Cultural Captain Girl`, `Cluthural` + `Female`, `Sports Captain Boy`, and `Sport` + `Girl` are normalized to the canonical app post IDs.
+
+Portrait generation uses the extracted source photo plus the uniform reference to create a clean school-election portrait in `public/candidates/final/`. It requires `OPENAI_API_KEY` in the environment and does not generate fake faces for rows without a source photo. If the key is missing, the command stops with:
+
+```text
+OPENAI_API_KEY required for portrait generation. Please set it, then tell me to continue.
+```
+
+Rows without embedded photos use reusable placeholders from `public/candidates/placeholders/`. The import step updates `src/data/realCandidates.ts`; generated portraits are used when present, missing-photo rows use placeholders, and raw extracted originals are not used as final app images.
+
+For a single guarded run after the API key is configured:
+
+```bash
+npm run process:candidates
+```
+
+The summary report is written to `exports/candidate-processing-summary.md`.
+
 ## Next Phase Roadmap
 
 ### Phase 1A: Brand Polish

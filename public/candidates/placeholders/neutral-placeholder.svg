@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1024" viewBox="0 0 768 1024" role="img" aria-label="Candidate placeholder">
+  <rect width="768" height="1024" fill="#f8fafc"/>
+  <rect x="56" y="56" width="656" height="912" rx="36" fill="#ffffff" stroke="#d8b44a" stroke-width="8"/>
+  <circle cx="384" cy="316" r="118" fill="#0b1f3a"/>
+  <path d="M194 762c24-154 112-236 190-236s166 82 190 236" fill="#0b1f3a"/>
+  <path d="M246 628h276l-42 226H288z" fill="#0f172a"/>
+  <path d="M334 526h100l-50 84z" fill="#ffffff"/>
+  <path d="M360 610h48l24 172h-96z" fill="#64748b"/>
+  <circle cx="504" cy="650" r="38" fill="#ffffff" stroke="#d8b44a" stroke-width="6"/>
+  <text x="504" y="662" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#0b1f3a">VPPS</text>
+  <text x="384" y="888" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="800" fill="#0b1f3a">PHOTO PENDING</text>
+</svg>

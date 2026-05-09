@@ -30,11 +30,18 @@ function createId(prefix: string) {
 }
 
 function migrateStore(store: ElectionStore): ElectionStore {
-  const candidates = Array.isArray(store.candidates)
+  let candidates = Array.isArray(store.candidates)
     ? store.candidates
         .map((candidate) => migrateCandidate(candidate as Candidate & { post?: string }))
         .filter((candidate): candidate is Candidate => Boolean(candidate))
     : []
+  const hasGeneratedRealCandidates = defaultCandidates.some((candidate) => candidate.id.startsWith('candidate-'))
+  const hasStoredRealCandidates = candidates.some((candidate) => candidate.id.startsWith('candidate-'))
+  const replaceDemoCandidates = hasGeneratedRealCandidates && !hasStoredRealCandidates
+  if (replaceDemoCandidates) {
+    candidates = defaultCandidates.map((candidate) => ({ ...candidate }))
+  }
+
   const voters = Array.isArray(store.voters) ? [...store.voters] : []
   for (const demoVoter of defaultVoters) {
     const existingIndex = voters.findIndex((voter) => voter.votingId === demoVoter.votingId || voter.id === demoVoter.id)
@@ -50,23 +57,27 @@ function migrateStore(store: ElectionStore): ElectionStore {
     }
   }
 
-  const votes = Array.isArray(store.votes)
+  const votes = replaceDemoCandidates
+    ? []
+    : Array.isArray(store.votes)
     ? store.votes
         .map((vote) => migrateVote(vote as Vote & { post?: string }, candidates))
         .filter((vote): vote is Vote => Boolean(vote))
     : []
 
-  for (const demoCandidate of defaultCandidates) {
-    const existingIndex = candidates.findIndex((candidate) => candidate.id === demoCandidate.id)
-    if (existingIndex >= 0) {
-      candidates[existingIndex] = {
-        ...demoCandidate,
-        photoUrl: candidates[existingIndex].photoUrl ?? demoCandidate.photoUrl,
-        approved: candidates[existingIndex].approved,
-        active: candidates[existingIndex].active,
+  if (!replaceDemoCandidates) {
+    for (const demoCandidate of defaultCandidates) {
+      const existingIndex = candidates.findIndex((candidate) => candidate.id === demoCandidate.id)
+      if (existingIndex >= 0) {
+        candidates[existingIndex] = {
+          ...demoCandidate,
+          photoUrl: candidates[existingIndex].photoUrl ?? demoCandidate.photoUrl,
+          approved: candidates[existingIndex].approved,
+          active: candidates[existingIndex].active,
+        }
+      } else {
+        candidates.push({ ...demoCandidate })
       }
-    } else {
-      candidates.push({ ...demoCandidate })
     }
   }
 
@@ -79,7 +90,7 @@ function migrateStore(store: ElectionStore): ElectionStore {
 }
 
 function migrateCandidate(candidate: Candidate & { post?: string }): Candidate | undefined {
-  const postId = candidate.postId ?? getLegacyPostId(candidate.post, candidate.house, candidate.captainGender)
+  const postId = getLegacyPostId(candidate.postId ?? candidate.post, candidate.house, candidate.captainGender, candidate.category)
   const post = getElectionPost(postId)
   if (!post) return undefined
 
@@ -88,13 +99,13 @@ function migrateCandidate(candidate: Candidate & { post?: string }): Candidate |
     postId: post.id,
     postLabel: post.label,
     house: post.kind === 'house' ? post.house : undefined,
-    captainGender: post.kind === 'house' ? post.captainGender : undefined,
+    captainGender: post.captainGender,
   }
 }
 
 function migrateVote(vote: Vote & { post?: string }, candidates: Candidate[]): Vote | undefined {
   const candidatePostId = candidates.find((candidate) => candidate.id === vote.candidateId)?.postId
-  const postId = vote.postId ?? getLegacyPostId(vote.post) ?? candidatePostId
+  const postId = getLegacyPostId(vote.postId ?? vote.post) ?? candidatePostId
   if (!postId || !getElectionPost(postId)) return undefined
   return {
     ...vote,
@@ -173,7 +184,8 @@ export function saveCandidate(
     postId: post.id,
     postLabel: post.label,
     house: post.kind === 'house' ? post.house : undefined,
-    captainGender: post.kind === 'house' ? post.captainGender : undefined,
+    captainGender: post.captainGender,
+    category: candidate.category,
     photoUrl: candidate.photoUrl,
     symbol: candidate.symbol,
     slogan: candidate.slogan,

@@ -11,6 +11,7 @@ firebase-debug.log
 node_modules
 dist
 dist-ssr
+incoming-candidates/
 *.local
 .env
 .env.local

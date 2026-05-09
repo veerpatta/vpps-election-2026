@@ -1,5 +1,6 @@
 import type { Candidate, Election, ElectionPostId, Voter, Vote } from '../types/election'
 import { GENERAL_POSTS, SUPPORTED_POSTS } from './electionPosts'
+import { realCandidates } from './realCandidates'
 
 const now = new Date().toISOString()
 
@@ -13,7 +14,7 @@ function candidate(
   classSection: string,
   rollNumber: string,
   postId: ElectionPostId,
-  extra: Pick<Partial<Candidate>, 'house' | 'captainGender' | 'approved' | 'active' | 'photoUrl'> = {},
+  extra: Pick<Partial<Candidate>, 'house' | 'captainGender' | 'category' | 'approved' | 'active' | 'photoUrl'> = {},
 ): Candidate {
   return {
     id,
@@ -23,6 +24,7 @@ function candidate(
     postId,
     house: extra.house,
     captainGender: extra.captainGender,
+    category: extra.category,
     photoUrl: extra.photoUrl,
     approved: extra.approved ?? true,
     active: extra.active ?? true,
@@ -39,17 +41,17 @@ export const defaultElection: Election = {
   updatedAt: now,
 }
 
-export const defaultCandidates: Candidate[] = [
+const demoCandidates: Candidate[] = [
   candidate('c-1', 'Aarav Singh', 'XII A', '07', 'head-boy'),
   candidate('c-2', 'Kabir Rathore', 'XI B', '12', 'head-boy'),
   candidate('c-3', 'Ananya Sharma', 'XII B', '05', 'head-girl'),
   candidate('c-4', 'Meera Chouhan', 'XI A', '18', 'head-girl'),
-  candidate('c-5', 'Yash Solanki', 'X B', '21', 'discipline-captain'),
-  candidate('c-6', 'Ritika Jain', 'XI C', '09', 'discipline-captain'),
-  candidate('c-7', 'Devendra Rao', 'XII C', '14', 'sports-captain'),
-  candidate('c-8', 'Nisha Kumari', 'XI B', '26', 'sports-captain'),
-  candidate('c-9', 'Sana Khan', 'X A', '11', 'cultural-captain'),
-  candidate('c-10', 'Harshita Patel', 'XI A', '03', 'cultural-captain'),
+  candidate('c-5', 'Yash Solanki', 'X B', '21', 'discipline-captain-boys', { captainGender: 'boys', category: 'Boy' }),
+  candidate('c-6', 'Ritika Jain', 'XI C', '09', 'discipline-captain-girls', { captainGender: 'girls', category: 'Girl' }),
+  candidate('c-7', 'Devendra Rao', 'XII C', '14', 'sports-captain-boys', { captainGender: 'boys', category: 'Boy' }),
+  candidate('c-8', 'Nisha Kumari', 'XI B', '26', 'sports-captain-girls', { captainGender: 'girls', category: 'Girl' }),
+  candidate('c-9', 'Armaan Khan', 'X A', '11', 'cultural-captain-boys', { captainGender: 'boys', category: 'Boy' }),
+  candidate('c-10', 'Harshita Patel', 'XI A', '03', 'cultural-captain-girls', { captainGender: 'girls', category: 'Girl' }),
 
   candidate('c-11', 'Pranav Meena', 'X C', '17', 'red-boys-house-captain', { house: 'red', captainGender: 'boys' }),
   candidate('c-12', 'Arjun Rajput', 'IX B', '22', 'red-boys-house-captain', { house: 'red', captainGender: 'boys' }),
@@ -72,6 +74,8 @@ export const defaultCandidates: Candidate[] = [
   candidate('c-26', 'Simran Kaur', 'XI C', '06', 'yellow-girls-house-captain', { house: 'yellow', captainGender: 'girls' }),
 ]
 
+export const defaultCandidates: Candidate[] = realCandidates.length ? realCandidates : demoCandidates
+
 export const defaultVoters: Voter[] = [
   { id: 'v-1', voterName: 'Test Student 001', voterType: 'student', classSection: 'X A', rollNumber: '01', house: 'red', votingId: '111111', hasVoted: false, active: true },
   { id: 'v-2', voterName: 'Test Student 002', voterType: 'student', classSection: 'IX A', rollNumber: '02', house: 'blue', votingId: '222222', hasVoted: false, active: true },
@@ -87,22 +91,24 @@ export const defaultVoters: Voter[] = [
   { id: 'v-12', voterName: 'Kavita Maam', voterType: 'teacher', departmentOrRole: 'English', votingId: '863520', hasVoted: false, active: true },
 ]
 
-export const defaultVotes: Vote[] = [
+const demoVotes: Vote[] = [
   { id: 'vote-1', electionId: defaultElection.id, postId: 'head-boy', candidateId: 'c-1', timestamp: now },
   { id: 'vote-2', electionId: defaultElection.id, postId: 'head-girl', candidateId: 'c-3', timestamp: now },
-  { id: 'vote-3', electionId: defaultElection.id, postId: 'discipline-captain', candidateId: 'c-6', timestamp: now },
-  { id: 'vote-4', electionId: defaultElection.id, postId: 'sports-captain', candidateId: 'c-7', timestamp: now },
-  { id: 'vote-5', electionId: defaultElection.id, postId: 'cultural-captain', candidateId: 'c-9', timestamp: now },
+  { id: 'vote-3', electionId: defaultElection.id, postId: 'discipline-captain-girls', candidateId: 'c-6', timestamp: now },
+  { id: 'vote-4', electionId: defaultElection.id, postId: 'sports-captain-boys', candidateId: 'c-7', timestamp: now },
+  { id: 'vote-5', electionId: defaultElection.id, postId: 'cultural-captain-boys', candidateId: 'c-9', timestamp: now },
   { id: 'vote-6', electionId: defaultElection.id, postId: 'red-boys-house-captain', candidateId: 'c-11', timestamp: now },
   { id: 'vote-7', electionId: defaultElection.id, postId: 'red-girls-house-captain', candidateId: 'c-13', timestamp: now },
   { id: 'vote-8', electionId: defaultElection.id, postId: 'head-boy', candidateId: 'c-2', timestamp: now },
   { id: 'vote-9', electionId: defaultElection.id, postId: 'head-girl', candidateId: 'c-4', timestamp: now },
-  { id: 'vote-10', electionId: defaultElection.id, postId: 'discipline-captain', candidateId: 'c-6', timestamp: now },
-  { id: 'vote-11', electionId: defaultElection.id, postId: 'sports-captain', candidateId: 'c-8', timestamp: now },
-  { id: 'vote-12', electionId: defaultElection.id, postId: 'cultural-captain', candidateId: 'c-9', timestamp: now },
+  { id: 'vote-10', electionId: defaultElection.id, postId: 'discipline-captain-girls', candidateId: 'c-6', timestamp: now },
+  { id: 'vote-11', electionId: defaultElection.id, postId: 'sports-captain-girls', candidateId: 'c-8', timestamp: now },
+  { id: 'vote-12', electionId: defaultElection.id, postId: 'cultural-captain-boys', candidateId: 'c-9', timestamp: now },
   { id: 'vote-13', electionId: defaultElection.id, postId: 'blue-boys-house-captain', candidateId: 'c-15', timestamp: now },
   { id: 'vote-14', electionId: defaultElection.id, postId: 'blue-girls-house-captain', candidateId: 'c-17', timestamp: now },
 ]
+
+export const defaultVotes: Vote[] = realCandidates.length ? [] : demoVotes
 
 export function createDefaultStore() {
   return {

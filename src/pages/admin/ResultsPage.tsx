@@ -34,7 +34,7 @@ function ResultCard({ result, compact = false }: { result: PostResult; compact?:
           <p className={`mt-1 text-sm font-semibold ${meta ? 'text-white/75 print:text-slate-600' : 'text-slate-600'}`}>Total votes: {result.totalVotes}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {house ? <HouseBadge house={house} /> : null}
-            {result.post.kind === 'house' ? (
+            {result.post.captainGender ? (
               <StatusPill tone={result.post.captainGender === 'girls' ? 'orange' : 'navy'}>
                 {result.post.captainGender === 'girls' ? 'Girls' : 'Boys'}
               </StatusPill>

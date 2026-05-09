@@ -12,9 +12,12 @@ import type {
 export const GENERAL_POSTS = [
   { id: 'head-boy', label: 'Head Boy', kind: 'general' },
   { id: 'head-girl', label: 'Head Girl', kind: 'general' },
-  { id: 'discipline-captain', label: 'Discipline Captain', kind: 'general' },
-  { id: 'sports-captain', label: 'Sports Captain', kind: 'general' },
-  { id: 'cultural-captain', label: 'Cultural Captain', kind: 'general' },
+  { id: 'discipline-captain-boys', label: 'Discipline Captain Boys', kind: 'general', captainGender: 'boys' },
+  { id: 'discipline-captain-girls', label: 'Discipline Captain Girls', kind: 'general', captainGender: 'girls' },
+  { id: 'cultural-captain-boys', label: 'Cultural Captain Boys', kind: 'general', captainGender: 'boys' },
+  { id: 'cultural-captain-girls', label: 'Cultural Captain Girls', kind: 'general', captainGender: 'girls' },
+  { id: 'sports-captain-boys', label: 'Sports Captain Boys', kind: 'general', captainGender: 'boys' },
+  { id: 'sports-captain-girls', label: 'Sports Captain Girls', kind: 'general', captainGender: 'girls' },
 ] as const satisfies readonly GeneralElectionPost[]
 
 const houseShortNames: Record<HouseId, string> = {
@@ -77,12 +80,35 @@ export function getPostCaptainGender(postId?: string) {
   return post?.kind === 'house' ? post.captainGender : undefined
 }
 
-export function getLegacyPostId(post?: string, house?: HouseId, captainGender?: CaptainGender): ElectionPostId | undefined {
+function inferGender(value?: string, fallback?: CaptainGender): CaptainGender | undefined {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  if (/\b(boys?|male)\b/.test(normalized)) return 'boys'
+  if (/\b(girls?|female)\b/.test(normalized)) return 'girls'
+  return fallback
+}
+
+function getGenderSeparatedPostId(post: string, captainGender?: CaptainGender): ElectionPostId | undefined {
+  const gender = inferGender(post, captainGender)
+  if (!gender) return undefined
+  if (/\b(discipline|dicipline|disciplinary)\b/.test(post)) return `discipline-captain-${gender}` as ElectionPostId
+  if (/\b(cultural|cluthural|culture)\b/.test(post)) return `cultural-captain-${gender}` as ElectionPostId
+  if (/\b(sports?|sport)\b/.test(post)) return `sports-captain-${gender}` as ElectionPostId
+  return undefined
+}
+
+export function getLegacyPostId(post?: string, house?: HouseId, captainGender?: CaptainGender, category?: string): ElectionPostId | undefined {
   const normalized = String(post ?? '').trim().toLowerCase()
   if (!normalized) return undefined
 
   const direct = ELECTION_POSTS.find((item) => item.label.toLowerCase() === normalized || item.id === normalized)
   if (direct) return direct.id
+
+  const genderSeparated = getGenderSeparatedPostId(normalized, inferGender(category, captainGender))
+  if (genderSeparated) return genderSeparated
+
+  if (normalized === 'discipline-captain') return `discipline-captain-${inferGender(category, captainGender) ?? 'boys'}` as ElectionPostId
+  if (normalized === 'cultural-captain') return `cultural-captain-${inferGender(category, captainGender) ?? 'boys'}` as ElectionPostId
+  if (normalized === 'sports-captain') return `sports-captain-${inferGender(category, captainGender) ?? 'boys'}` as ElectionPostId
 
   if (normalized === 'house captain' && house) return `${house}-${captainGender ?? 'boys'}-house-captain` as ElectionPostId
   if ((normalized === 'house captain boy' || normalized === 'boys house captain') && house) return `${house}-boys-house-captain` as ElectionPostId

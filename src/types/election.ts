@@ -13,9 +13,12 @@ export type CaptainGender = 'boys' | 'girls'
 export type GeneralPostId =
   | 'head-boy'
   | 'head-girl'
-  | 'discipline-captain'
-  | 'sports-captain'
-  | 'cultural-captain'
+  | 'discipline-captain-boys'
+  | 'discipline-captain-girls'
+  | 'cultural-captain-boys'
+  | 'cultural-captain-girls'
+  | 'sports-captain-boys'
+  | 'sports-captain-girls'
 
 export type HouseCaptainPostId =
   | 'red-boys-house-captain'
@@ -34,6 +37,7 @@ export interface GeneralElectionPost {
   id: GeneralPostId
   label: string
   kind: 'general'
+  captainGender?: CaptainGender
 }
 
 export interface HouseCaptainElectionPost {
@@ -66,6 +70,7 @@ export interface Candidate {
   postLabel?: string
   house?: HouseId
   captainGender?: CaptainGender
+  category?: string
   photoUrl?: string
   symbol?: string
   slogan?: string

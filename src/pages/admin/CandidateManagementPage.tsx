@@ -38,6 +38,7 @@ export function CandidateManagementPage() {
       photoUrl: form.photoUrl,
       symbol: form.symbol,
       slogan: form.slogan,
+      category: form.category,
       approved: form.approved ?? true,
       active: form.active ?? true,
     })
@@ -68,7 +69,7 @@ export function CandidateManagementPage() {
                   ...form,
                   postId,
                   house: post?.kind === 'house' ? post.house : undefined,
-                  captainGender: post?.kind === 'house' ? post.captainGender : undefined,
+                  captainGender: post?.captainGender,
                 })
               }}
             >
@@ -80,12 +81,14 @@ export function CandidateManagementPage() {
             <Button type="button" onClick={handleSave} className="w-full"><Plus size={18} />{form.id ? 'Save Candidate' : 'Add Candidate'}</Button>
           </div>
         </div>
-        {form.house ? (
+        {form.house || form.captainGender ? (
           <div className="mt-4 flex flex-wrap gap-2 rounded-3xl border border-vpps-navy/10 bg-vpps-soft/70 p-4">
-            <HouseBadge house={form.house} showHeroName />
-            <StatusPill tone={form.captainGender === 'girls' ? 'orange' : 'navy'}>
-              {form.captainGender === 'girls' ? 'Girls House Captain' : 'Boys House Captain'}
-            </StatusPill>
+            {form.house ? <HouseBadge house={form.house} showHeroName /> : null}
+            {form.captainGender ? (
+              <StatusPill tone={form.captainGender === 'girls' ? 'orange' : 'navy'}>
+                {form.captainGender === 'girls' ? 'Girls Category' : 'Boys Category'}
+              </StatusPill>
+            ) : null}
           </div>
         ) : null}
         {message ? <p className="mt-4 rounded-2xl bg-vpps-danger/10 px-4 py-3 text-sm font-bold text-red-700">{message}</p> : null}

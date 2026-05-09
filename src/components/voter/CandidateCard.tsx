@@ -54,6 +54,12 @@ export function CandidateCard({ candidate, selected, onSelect }: CandidateCardPr
                   {candidate.captainGender === 'girls' ? 'Girls' : 'Boys'}
                 </StatusPill>
               </div>
+            ) : candidate.captainGender ? (
+              <div className="mt-2">
+                <StatusPill tone={candidate.captainGender === 'girls' ? 'orange' : 'navy'}>
+                  {candidate.captainGender === 'girls' ? 'Girls' : 'Boys'}
+                </StatusPill>
+              </div>
             ) : null}
           </div>
         </div>

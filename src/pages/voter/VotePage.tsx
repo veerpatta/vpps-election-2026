@@ -233,8 +233,8 @@ export function VotePage() {
                   <div className="mt-5 rounded-2xl border border-vpps-navy/10 bg-vpps-soft/80 p-4">
                     <p className="text-sm font-bold text-slate-700">
                       {voter.voterType === 'student'
-                        ? 'You will vote for general posts and both Boys and Girls House Captain for your own house.'
-                        : 'You will vote for general posts and all eight House Captain contests.'}
+                        ? 'You will vote for Head Boy, Head Girl, Boys and Girls categories for Discipline, Cultural, Sports, and your own house captains.'
+                        : 'You will vote for Head Boy, Head Girl, Boys and Girls categories for Discipline, Cultural, Sports, and all House Captain contests.'}
                     </p>
                     <p className="mt-2 text-xs font-bold text-slate-500">Total screens: {ballotPosts.length}</p>
                   </div>
