@@ -56,7 +56,12 @@ firebase deploy
 
 ## Firebase Setup Notes
 
-Firebase is not connected yet. Add real Firebase web app values to `.env.local` using the keys from `.env.example`.
+Firebase project created:
+
+- Project ID: `vpps-election-2026`
+- Console: `https://console.firebase.google.com/project/vpps-election-2026/overview`
+
+Firebase is not connected to the app runtime yet. Add real Firebase web app values to `.env.local` using the keys from `.env.example`.
 
 Required later:
 
