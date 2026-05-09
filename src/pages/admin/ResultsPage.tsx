@@ -48,9 +48,10 @@ function ResultCard({ result, compact = false }: { result: PostResult; compact?:
             className="flex items-center gap-4 rounded-3xl border border-white/30 bg-white/90 px-5 py-4 text-vpps-navy shadow-soft print:border print:bg-white print:shadow-none"
           >
             {house ? <HouseLogo house={house} size="md" /> : <Trophy size={30} className="text-vpps-richGold" />}
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-800">Winner</p>
-              <p className="mt-1 text-lg font-black">{result.winner.classSection}</p>
+              <p className="mt-1 text-lg font-black leading-tight">{result.winner.name}</p>
+              <p className="text-xs font-semibold text-slate-600">{result.winner.classSection}</p>
             </div>
           </motion.div>
         ) : null}
