@@ -77,6 +77,33 @@ Admin Google Sign-In setup:
 
 The voter side does not use Google login. Students and teachers vote using their 6-digit Voting ID.
 
+## Firebase Console Checklist
+
+1. Firebase project:
+   - Project ID: `vpps-election-2026`
+
+2. Authentication:
+   - Go to Firebase Console > Authentication > Sign-in method.
+   - Enable Google provider.
+   - Use the school support email.
+   - Admin access in the app is restricted to `raj@vpps.co.in`.
+
+3. Web app config:
+   - Add Firebase web app.
+   - Copy config values into `.env.local`.
+   - Use the keys from `.env.example`.
+   - Never commit `.env.local`.
+
+4. Firestore:
+   - Do not create Firestore casually.
+   - Firestore location is permanent.
+   - Choose the nearest India region if available.
+   - After location is confirmed, create the database.
+
+5. Hosting:
+   - Run `npm run build`.
+   - Run `firebase deploy`.
+
 ## Firestore Setup
 
 Confirm the Firestore location before creating the first database. The location choice is permanent. Use the nearest India region if available in Firebase Console.
