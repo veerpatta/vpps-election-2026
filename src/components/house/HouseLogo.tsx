@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { Flag, Shield } from 'lucide-react'
 import { useState } from 'react'
 import { getHouseMeta } from '../../lib/houses'
-import { cn, initials } from '../../lib/utils'
+import { assetPath, cn, initials } from '../../lib/utils'
 import type { HouseId } from '../../types/election'
 
 interface HouseLogoProps {
@@ -44,7 +44,7 @@ export function HouseLogo({ house, size = 'md', animated = false, className }: H
     >
       {meta && !imageFailed ? (
         <img
-          src={meta.logoPath}
+          src={assetPath(meta.logoPath)}
           alt={`${meta.name} logo`}
           className="h-full w-full object-contain p-1.5"
           onError={() => setImageFailed(true)}

@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Crown, Flag, Shield } from 'lucide-react'
 import { useState } from 'react'
-import { cn, initials } from '../../lib/utils'
+import { assetPath, cn, initials } from '../../lib/utils'
 import { getHouseMeta } from '../../lib/houses'
 import type { HouseId } from '../../types/election'
 import { HouseLogo } from './HouseLogo'
@@ -38,7 +38,7 @@ export function HouseHeroCard({ house, compact = false, selected = false, classN
     >
       {!imageFailed ? (
         <img
-          src={meta.heroPath}
+          src={assetPath(meta.heroPath)}
           alt={meta.heroName}
           className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
           onError={() => setImageFailed(true)}

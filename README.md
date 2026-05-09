@@ -28,6 +28,12 @@ Build:
 npm run build
 ```
 
+GitHub Pages build:
+
+```powershell
+npm run build:gh-pages
+```
+
 Deploy after Firebase setup:
 
 ```powershell
@@ -55,14 +61,20 @@ Expected house behavior:
 
 ## Routes
 
-- `/` redirects to `/vote`
-- `/vote` voter flow
-- `/admin` staff login
-- `/admin/dashboard` election control room
-- `/admin/candidates` candidate list
-- `/admin/voters` voter list
-- `/admin/control` voting control
-- `/admin/results` result sheet
+Local routes use hash routing so the same build works on GitHub Pages:
+
+- `/#/vote` voter flow
+- `/#/admin` staff login
+- `/#/admin/dashboard` election control room
+- `/#/admin/candidates` candidate list
+- `/#/admin/voters` voter list
+- `/#/admin/control` voting control
+- `/#/admin/results` result sheet
+
+GitHub Pages routes:
+
+- `https://veerpatta.github.io/vpps-election-2026/#/vote`
+- `https://veerpatta.github.io/vpps-election-2026/#/admin`
 
 ## Firebase Google Sign-In Setup
 
@@ -81,9 +93,27 @@ Admin Google Sign-In setup:
 4. Use the school support email.
 5. Add Firebase web config into `.env.local`.
 6. Admin access is restricted in the app to `raj@vpps.co.in`.
-7. Do not use Email/Password login for admin in this version.
+7. Add authorized domains:
+   - `localhost`
+   - `veerpatta.github.io`
+8. Do not use Email/Password login for admin in this version.
 
 The voter side does not use Google login. Students and teachers vote using their 6-digit Voting ID.
+
+## Candidate Photos
+
+Candidate profiles focus on the candidate photo, name, class, post, house badge, and approval/active status. Election symbols and slogans are kept only as optional old-data fields and are not shown in the normal UI.
+
+For now, candidate photos are added as image URLs from `/admin/candidates` using the **Candidate Photo** field. If no image is added, or if the image fails to load, the app shows a clean initials avatar using the candidate name and house color.
+
+Recommended photo format:
+
+- Same-size portrait images
+- Clear face and clean background
+- School uniform if possible
+- School-approved image source
+
+Future storage/upload support can be added when Firebase Storage or another approved storage path is ready.
 
 ## School Houses
 
@@ -219,6 +249,45 @@ Canonical logo paths:
 Do not hotlink random web images. Use only school-approved images or public-domain images with permission suitable for school election use.
 
 If any image is missing or fails to load, the app shows a shield or flag fallback and does not crash.
+
+## GitHub Pages Deployment
+
+This Vite app is configured for the GitHub Pages project site path:
+
+```powershell
+npm run build:gh-pages
+```
+
+GitHub repository setup:
+
+1. Open the GitHub repository settings.
+2. Go to **Pages**.
+3. Set **Source** to **GitHub Actions**.
+4. Push to `main`. The workflow also accepts `master` because this repo currently uses `master` as its default branch.
+5. Expected site URL: `https://veerpatta.github.io/vpps-election-2026/`
+
+The public voter route will be:
+
+- `https://veerpatta.github.io/vpps-election-2026/#/vote`
+
+The admin route will be:
+
+- `https://veerpatta.github.io/vpps-election-2026/#/admin`
+
+For Firebase Google Sign-In on GitHub Pages, add this authorized domain in Firebase Authentication:
+
+- `veerpatta.github.io`
+
+GitHub Pages builds need Firebase Vite environment values if admin login should work on the deployed site. Add them in GitHub repository settings under **Secrets and variables > Actions** as secrets:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+
+Do not commit `.env.local`. If these secrets are missing, the deployed voter flow can still load, but admin login will show the Firebase setup-needed message.
 
 ## Firebase Console Checklist
 

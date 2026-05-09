@@ -106,14 +106,14 @@ export function VoterManagementPage() {
   }
 
   return (
-    <section className="px-4 py-6 sm:px-8 lg:px-10">
+    <section className="px-4 py-5 sm:px-8 lg:px-10">
       <div className="no-print">
         <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Voter List</p>
-        <h1 className="mt-2 text-3xl font-black sm:text-5xl">Voter Management</h1>
+        <h1 className="mt-2 text-3xl font-black sm:text-4xl">Voter Management</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Students and teachers use the same simple 6-digit Voting ID. Student house is stored here and never selected on the voting screen.</p>
       </div>
 
-      <Card className="no-print mt-8">
+      <Card className="no-print mt-5">
         <div className="grid gap-4 lg:grid-cols-7">
           <Field label="Voter Name"><TextInput value={form.voterName ?? ''} onChange={(event) => setForm({ ...form, voterName: event.target.value })} /></Field>
           <Field label="Voter Type">
@@ -183,7 +183,7 @@ export function VoterManagementPage() {
                 <span>Name</span><span>Type</span><span>Class</span><span>Roll No</span><span>House</span><span>Voting ID</span><span>Status</span>
               </div>
               {preview.rows.map((row) => (
-                <div key={row.rowNumber} className="grid min-w-[58rem] grid-cols-[1.2fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 border-b px-4 py-3 text-sm last:border-b-0">
+                <div key={row.rowNumber} className="grid min-w-[58rem] grid-cols-[1.2fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 border-b px-4 py-2.5 text-sm last:border-b-0">
                   <span className="font-bold">{row.voterName || '-'}</span>
                   <span className="capitalize">{row.voterType ?? '-'}</span>
                   <span>{row.classSection || '-'}</span>
@@ -261,7 +261,7 @@ export function VoterManagementPage() {
           <span>Name</span><span>Type</span><span>Class / Role</span><span>House</span><span>Voting ID</span><span>Status</span><span className="no-print">Actions</span>
         </div>
         {filteredVoters.map((voter) => (
-          <div key={voter.id} className="grid gap-3 border-b border-slate-100 px-5 py-4 last:border-b-0 lg:grid-cols-[1.1fr_0.6fr_0.8fr_1fr_0.8fr_0.8fr_0.9fr] lg:items-center">
+          <div key={voter.id} className="grid gap-3 border-b border-slate-100 px-5 py-3 last:border-b-0 lg:grid-cols-[1.1fr_0.6fr_0.8fr_1fr_0.8fr_0.8fr_0.9fr] lg:items-center">
             <div><p className="font-black">{voter.voterName}</p><p className="text-xs font-semibold text-slate-500">{voter.rollNumber}</p></div>
             <p className="text-sm font-bold capitalize">{voter.voterType}</p>
             <p className="text-sm text-slate-600">{voter.classSection || voter.departmentOrRole || '-'}</p>

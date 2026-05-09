@@ -44,6 +44,9 @@ function migrateStore(store: ElectionStore): ElectionStore {
     if (existingIndex >= 0) {
       candidates[existingIndex] = {
         ...demoCandidate,
+        ...candidates[existingIndex],
+        symbol: candidates[existingIndex].symbol ?? demoCandidate.symbol,
+        slogan: candidates[existingIndex].slogan ?? demoCandidate.slogan,
         approved: candidates[existingIndex].approved,
         active: candidates[existingIndex].active,
       }
@@ -122,7 +125,7 @@ export function getBallotPosts(voter: Voter): CouncilPost[] {
 }
 
 export function saveCandidate(
-  candidate: Partial<Candidate> & Pick<Candidate, 'name' | 'classSection' | 'post' | 'symbol'>,
+  candidate: Partial<Candidate> & Pick<Candidate, 'name' | 'classSection' | 'post'>,
 ) {
   const store = readStore()
   const index = candidate.id ? store.candidates.findIndex((item) => item.id === candidate.id) : -1

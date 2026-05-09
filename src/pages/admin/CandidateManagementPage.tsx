@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, Pencil, Plus, ShieldX, UserRoundX } from 'lucide-react'
+import { CandidateAvatar } from '../../components/candidates/CandidateAvatar'
 import { HouseBadge } from '../../components/house/HouseBadge'
-import { HouseLogo } from '../../components/house/HouseLogo'
 import { Button, Card, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
 import { supportedPosts } from '../../data/mockElectionData'
 import { getCandidates, saveCandidate, toggleCandidate } from '../../lib/electionStore'
@@ -14,8 +14,7 @@ const blankCandidate = {
   rollNumber: '',
   post: 'Head Boy' as CouncilPost,
   house: undefined as HouseId | undefined,
-  symbol: '',
-  slogan: '',
+  photoUrl: '',
   approved: true,
   active: true,
 }
@@ -30,7 +29,7 @@ export function CandidateManagementPage() {
   }
 
   function handleSave() {
-    if (!form.name || !form.classSection || !form.post || !form.symbol) return
+    if (!form.name || !form.classSection || !form.post) return
     if (isHouseCaptainPost(form.post) && !form.house) {
       setMessage('Please select the candidate house for House Captain.')
       return
@@ -42,6 +41,7 @@ export function CandidateManagementPage() {
       rollNumber: form.rollNumber,
       post: form.post,
       house: isHouseCaptainPost(form.post) ? form.house : undefined,
+      photoUrl: form.photoUrl,
       symbol: form.symbol,
       slogan: form.slogan,
       approved: form.approved ?? true,
@@ -53,12 +53,12 @@ export function CandidateManagementPage() {
   }
 
   return (
-    <section className="px-4 py-6 sm:px-8 lg:px-10">
+    <section className="px-4 py-5 sm:px-8 lg:px-10">
       <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Candidate List</p>
-      <h1 className="mt-2 text-3xl font-black sm:text-5xl">Candidate Management</h1>
+      <h1 className="mt-2 text-3xl font-black sm:text-4xl">Candidate Management</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Approved and active candidates appear on the voting screen.</p>
 
-      <Card className="mt-8">
+      <Card className="mt-5">
         <div className="grid gap-4 lg:grid-cols-6">
           <Field label="Student Name"><TextInput value={form.name ?? ''} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field>
           <Field label="Class & Section"><TextInput value={form.classSection ?? ''} onChange={(event) => setForm({ ...form, classSection: event.target.value })} /></Field>
@@ -84,7 +84,7 @@ export function CandidateManagementPage() {
               </Select>
             </Field>
           ) : null}
-          <Field label="Election Symbol"><TextInput value={form.symbol ?? ''} onChange={(event) => setForm({ ...form, symbol: event.target.value })} /></Field>
+          <Field label="Candidate Photo"><TextInput value={form.photoUrl ?? ''} onChange={(event) => setForm({ ...form, photoUrl: event.target.value })} placeholder="Image URL optional" /></Field>
           <div className="flex items-end">
             <Button type="button" onClick={handleSave} className="w-full"><Plus size={18} />{form.id ? 'Save Candidate' : 'Add Candidate'}</Button>
           </div>
@@ -95,32 +95,29 @@ export function CandidateManagementPage() {
           </div>
         ) : null}
         {message ? <p className="mt-4 rounded-2xl bg-vpps-danger/10 px-4 py-3 text-sm font-bold text-red-700">{message}</p> : null}
-        <div className="mt-4">
-          <Field label="Short promise/slogan optional"><TextInput value={form.slogan ?? ''} onChange={(event) => setForm({ ...form, slogan: event.target.value })} /></Field>
-        </div>
       </Card>
 
-      <div className="mt-6 grid gap-4">
+      <div className="mt-5 grid gap-3">
         {candidates.map((candidate) => {
           const meta = candidate.house ? houses[candidate.house] : undefined
           return (
             <Card
               key={candidate.id}
-              className={meta ? `border-2 bg-gradient-to-br ${meta.softGradientClass}` : undefined}
+              className={meta ? `border-2 bg-gradient-to-br p-4 ${meta.softGradientClass}` : 'p-4'}
               style={meta ? { borderColor: meta.borderColor } : undefined}
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-4">
-                  {candidate.house ? <HouseLogo house={candidate.house} size="lg" /> : null}
-                  <div>
+                  <CandidateAvatar name={candidate.name} imageUrl={candidate.photoUrl} house={candidate.house} size="md" />
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-xl font-black">{candidate.name}</h2>
                       <StatusPill tone={candidate.approved ? 'green' : 'orange'}>{candidate.approved ? 'Approved' : 'Not Approved'}</StatusPill>
                       <StatusPill tone={candidate.active ? 'navy' : 'red'}>{candidate.active ? 'Active' : 'Inactive'}</StatusPill>
                       {candidate.house ? <HouseBadge house={candidate.house} size="sm" /> : null}
                     </div>
-                    <p className="mt-2 text-sm font-semibold text-slate-600">{candidate.classSection} - {candidate.post} - {candidate.symbol}</p>
-                    <p className="mt-1 text-sm text-slate-500">{candidate.slogan}</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-600">{candidate.classSection} - {candidate.post}</p>
+                    {candidate.rollNumber ? <p className="mt-1 text-xs font-bold text-slate-500">Roll No. {candidate.rollNumber}</p> : null}
                   </div>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">

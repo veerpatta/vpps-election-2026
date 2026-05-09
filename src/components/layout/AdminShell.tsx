@@ -77,6 +77,22 @@ export function AdminShell() {
         </div>
       </header>
       <main className="pb-24 lg:ml-72 lg:pb-0">
+        <header className="no-print sticky top-0 z-10 hidden items-center justify-between border-b border-white/70 bg-white/90 px-8 py-3 shadow-sm backdrop-blur lg:flex">
+          <div>
+            <p className="text-sm font-black text-vpps-navy">Election Control Room</p>
+            <p className="text-xs font-semibold text-slate-500">{user?.email}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => navigate('/vote')} className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-vpps-richGold/40 bg-white px-4 text-sm font-bold text-vpps-navy shadow-sm hover:border-vpps-richGold">
+              <Power size={17} />
+              Voting Screen
+            </button>
+            <button type="button" onClick={handleLogout} className="inline-flex min-h-10 items-center gap-2 rounded-2xl px-4 text-sm font-bold text-vpps-navy hover:bg-vpps-navy/5">
+              <LogOut size={17} />
+              Logout
+            </button>
+          </div>
+        </header>
         <Outlet />
       </main>
       <nav className="no-print fixed bottom-0 left-0 right-0 z-20 grid grid-cols-5 border-t border-white/80 bg-white/95 px-2 py-2 shadow-2xl lg:hidden">

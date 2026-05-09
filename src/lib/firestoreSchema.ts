@@ -28,7 +28,7 @@ export interface FirestoreCandidate {
   post: CouncilPost
   house?: HouseId
   photoUrl?: string
-  symbol: string
+  symbol?: string
   slogan?: string
   approved: boolean
   active: boolean

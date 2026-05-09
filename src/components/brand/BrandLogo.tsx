@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { cn } from '../../lib/utils'
+import { assetPath, cn } from '../../lib/utils'
 
 type BrandLogoVariant = 'full' | 'icon' | 'square'
 
@@ -33,7 +33,7 @@ export function BrandLogo({ variant, className, showFallbackText = true, animate
     </div>
   ) : (
     <img
-      src={logoSources[variant]}
+      src={assetPath(logoSources[variant])}
       alt="Veer Patta Senior Secondary School logo"
       className="h-full w-full object-contain"
       draggable={false}
