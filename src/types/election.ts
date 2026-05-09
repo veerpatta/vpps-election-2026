@@ -6,6 +6,8 @@ export type ElectionStatus =
 
 export type VoterType = 'student' | 'teacher'
 
+export type HouseId = 'red' | 'blue' | 'green' | 'yellow'
+
 export type CouncilPost =
   | 'Head Boy'
   | 'Head Girl'
@@ -13,6 +15,10 @@ export type CouncilPost =
   | 'Sports Captain'
   | 'Cultural Captain'
   | 'House Captain'
+  | 'Rana Pratap House Captain'
+  | 'Rana Kumbha House Captain'
+  | 'Bappa Rawal House Captain'
+  | 'Rana Sanga House Captain'
   | 'House Captain Boy'
   | 'House Captain Girl'
   | 'Vice Captain'
@@ -33,6 +39,7 @@ export interface Candidate {
   classSection: string
   rollNumber?: string
   post: CouncilPost
+  house?: HouseId
   photoUrl?: string
   symbol: string
   slogan?: string
@@ -47,6 +54,7 @@ export interface Voter {
   classSection?: string
   rollNumber?: string
   departmentOrRole?: string
+  house?: HouseId | 'all'
   votingId: string
   hasVoted: boolean
   votedAt?: string

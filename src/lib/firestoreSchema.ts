@@ -1,4 +1,4 @@
-import type { CouncilPost, ElectionStatus, VoterType } from '../types/election'
+import type { CouncilPost, ElectionStatus, HouseId, VoterType } from '../types/election'
 
 export const firestoreCollections = {
   elections: 'elections',
@@ -26,6 +26,7 @@ export interface FirestoreCandidate {
   classSection: string
   rollNumber?: string
   post: CouncilPost
+  house?: HouseId
   photoUrl?: string
   symbol: string
   slogan?: string
@@ -40,6 +41,7 @@ export interface FirestoreVoter {
   classSection?: string
   rollNumber?: string
   departmentOrRole?: string
+  house?: HouseId | 'all'
   votingId: string
   hasVoted: boolean
   votedAt?: string

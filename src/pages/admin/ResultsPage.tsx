@@ -3,8 +3,10 @@ import { motion } from 'framer-motion'
 import { Lock, Printer, Trophy } from 'lucide-react'
 import { BrandHeader } from '../../components/brand/BrandHeader'
 import { BrandLogo } from '../../components/brand/BrandLogo'
+import { HouseBadge } from '../../components/house/HouseBadge'
 import { Button, Card, StatusPill } from '../../components/ui/primitives'
 import { exportResultsCsv, getElection, getResults } from '../../lib/electionStore'
+import { getHouseByPost, houses } from '../../lib/houses'
 import { formatStatus } from '../../lib/utils'
 
 export function ResultsPage() {
@@ -45,36 +47,41 @@ export function ResultsPage() {
             <p className="mt-1 text-sm font-semibold text-slate-600">Date: {resultDate}</p>
           </div>
           <div className="grid gap-6">
-            {results.map((result) => (
-              <Card key={result.post}>
+            {results.map((result) => {
+              const house = getHouseByPost(result.post)
+              const meta = house ? houses[house] : undefined
+              return (
+              <Card key={result.post} className={meta ? 'border-2' : undefined} style={meta ? { borderColor: meta.borderColor } : undefined}>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-black uppercase tracking-[0.18em] text-vpps-richGold">{result.post}</p>
                     <h2 className="mt-2 text-2xl font-black">{result.winner ? result.winner.name : 'No winner yet'}</h2>
                     <p className="mt-1 text-sm font-semibold text-slate-600">Total votes: {result.totalVotes}</p>
+                    {house ? <HouseBadge house={house} className="mt-3" /> : null}
                   </div>
                   {result.winner ? (
-                    <motion.div className="rounded-3xl bg-vpps-gold/20 px-5 py-4 text-vpps-navy">
+                    <motion.div className="rounded-3xl px-5 py-4 text-vpps-navy" style={{ backgroundColor: meta?.softColor ?? 'rgba(244,180,0,0.20)' }}>
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-800">Winner</p>
                       <p className="mt-1 text-lg font-black">{result.winner.classSection}</p>
                     </motion.div>
                   ) : null}
                 </div>
                 <div className="mt-5 overflow-hidden rounded-3xl border border-vpps-navy/10">
-                  <div className="hidden grid-cols-[1.3fr_0.7fr_0.5fr_0.6fr] gap-3 bg-vpps-navy px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-white lg:grid">
-                    <span>Candidate</span><span>Class</span><span>Votes</span><span>Result</span>
+                  <div className="hidden grid-cols-[1.2fr_0.7fr_0.8fr_0.5fr_0.6fr] gap-3 bg-vpps-navy px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-white lg:grid">
+                    <span>Candidate</span><span>Class</span><span>House</span><span>Votes</span><span>Result</span>
                   </div>
                   {result.rows.map((row) => (
-                    <div key={row.candidate.id} className="grid gap-2 border-b border-slate-100 bg-white px-4 py-4 last:border-b-0 lg:grid-cols-[1.3fr_0.7fr_0.5fr_0.6fr] lg:items-center">
+                    <div key={row.candidate.id} className="grid gap-2 border-b border-slate-100 bg-white px-4 py-4 last:border-b-0 lg:grid-cols-[1.2fr_0.7fr_0.8fr_0.5fr_0.6fr] lg:items-center">
                       <p className="font-black">{row.candidate.name}</p>
                       <p className="text-sm font-semibold text-slate-600">{row.candidate.classSection}</p>
+                      <div>{row.candidate.house ? <HouseBadge house={row.candidate.house} size="sm" showHero={false} /> : <span className="text-sm font-semibold text-slate-500">General</span>}</div>
                       <p className="text-xl font-black">{row.votes}</p>
                       <div>{row.isWinner ? <StatusPill tone="green">Winner</StatusPill> : <span className="text-sm font-semibold text-slate-500">-</span>}</div>
                     </div>
                   ))}
                 </div>
               </Card>
-            ))}
+            )})}
           </div>
         </div>
       )}

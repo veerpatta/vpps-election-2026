@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Check, CheckCircle2, ShieldCheck, Vote } from 'lucide-react'
+import { ArrowLeft, Check, CheckCircle2, ShieldCheck, UserCheck, Vote } from 'lucide-react'
 import { BrandHeader } from '../../components/brand/BrandHeader'
 import { BrandLogo } from '../../components/brand/BrandLogo'
+import { HouseBadge } from '../../components/house/HouseBadge'
+import { HouseHeroCard } from '../../components/house/HouseHeroCard'
 import { CandidateCard } from '../../components/voter/CandidateCard'
 import { Button, Card, PageBackground } from '../../components/ui/primitives'
-import { requiredPosts } from '../../data/mockElectionData'
-import { getVotingCandidates, submitVote, validateVotingId } from '../../lib/electionStore'
-import type { CouncilPost } from '../../types/election'
+import { getBallotPosts, getVotingCandidates, submitVote, validateVotingId } from '../../lib/electionStore'
+import { getHouseByPost } from '../../lib/houses'
+import type { CouncilPost, Voter as VoterRecord } from '../../types/election'
 
 type Step = 'welcome' | 'id' | 'select' | 'review' | 'thanks'
 
@@ -24,11 +26,14 @@ export function VotePage() {
   const [message, setMessage] = useState('')
   const [postIndex, setPostIndex] = useState(0)
   const [selected, setSelected] = useState<Partial<Record<CouncilPost, string>>>({})
+  const [voter, setVoter] = useState<VoterRecord | null>(null)
 
-  const currentPost = requiredPosts[postIndex]
-  const candidates = useMemo(() => getVotingCandidates(currentPost), [currentPost])
-  const selectedCandidate = candidates.find((candidate) => candidate.id === selected[currentPost])
-  const selectedRows = requiredPosts.map((post) => ({
+  const ballotPosts = useMemo(() => (voter ? getBallotPosts(voter) : []), [voter])
+  const currentPost = ballotPosts[postIndex]
+  const currentHouse = currentPost ? getHouseByPost(currentPost) : undefined
+  const candidates = useMemo(() => (currentPost ? getVotingCandidates(currentPost) : []), [currentPost])
+  const selectedCandidate = currentPost ? candidates.find((candidate) => candidate.id === selected[currentPost]) : undefined
+  const selectedRows = ballotPosts.map((post) => ({
     post,
     candidate: getVotingCandidates(post).find((candidate) => candidate.id === selected[post]),
   }))
@@ -39,6 +44,7 @@ export function VotePage() {
     setMessage('')
     setPostIndex(0)
     setSelected({})
+    setVoter(null)
   }
 
   function handleIdSubmit() {
@@ -48,21 +54,25 @@ export function VotePage() {
       return
     }
     setMessage('')
+    setVoter(result.voter)
+    setPostIndex(0)
+    setSelected({})
     setStep('select')
   }
 
   function handleNextPost() {
+    if (!currentPost) return
     if (!selected[currentPost]) {
       setMessage(`Please select one candidate for ${currentPost}.`)
       return
     }
     setMessage('')
-    if (postIndex === requiredPosts.length - 1) setStep('review')
+    if (postIndex === ballotPosts.length - 1) setStep('review')
     else setPostIndex((value) => value + 1)
   }
 
   function handleSubmitFinalVote() {
-    const complete = requiredPosts.every((post) => Boolean(selected[post]))
+    const complete = ballotPosts.every((post) => Boolean(selected[post]))
     if (!complete) {
       setMessage('Please complete every post before submitting your vote.')
       setStep('select')
@@ -70,7 +80,7 @@ export function VotePage() {
     }
 
     try {
-      submitVote(votingId, selected as Record<CouncilPost, string>)
+      submitVote(votingId, selected)
       setStep('thanks')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Please try again.')
@@ -131,40 +141,61 @@ export function VotePage() {
             </motion.section>
           ) : null}
 
-          {step === 'select' ? (
+          {step === 'select' && currentPost ? (
             <motion.section key={`select-${currentPost}`} {...pageMotion} className="w-full">
               <BrandHeader compact className="mb-6 rounded-3xl border border-white/80 bg-white/85 p-3 shadow-sm" />
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Step {postIndex + 1} of {requiredPosts.length}</p>
+                  <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Step {postIndex + 1} of {ballotPosts.length}</p>
                   <h1 className="mt-2 text-3xl font-black sm:text-5xl">{currentPost}</h1>
                   <p className="mt-2 text-sm font-semibold text-slate-600">Select one candidate for this post.</p>
                 </div>
                 <div className="h-3 rounded-full bg-white shadow-inner sm:w-64">
-                  <div className="h-full rounded-full bg-vpps-gold transition-all" style={{ width: `${((postIndex + 1) / requiredPosts.length) * 100}%` }} />
+                  <div className="h-full rounded-full bg-vpps-gold transition-all" style={{ width: `${((postIndex + 1) / ballotPosts.length) * 100}%` }} />
                 </div>
               </div>
+              {voter ? (
+                <div className="mb-5 flex flex-wrap items-center gap-3 rounded-3xl border border-white/80 bg-white/85 p-4 shadow-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-vpps-navy/10 px-3 py-1.5 text-xs font-black text-vpps-navy">
+                    <UserCheck size={14} />
+                    {voter.voterName}
+                  </span>
+                  {voter.voterType === 'student' ? (
+                    <>
+                      <span className="text-sm font-bold text-slate-600">{voter.classSection}</span>
+                      <HouseBadge house={voter.house} size="md" />
+                    </>
+                  ) : (
+                    <span className="rounded-full bg-vpps-gold/20 px-3 py-1.5 text-xs font-black text-amber-800">Teacher - all house captain posts</span>
+                  )}
+                </div>
+              ) : null}
+              {currentHouse ? <HouseHeroCard house={currentHouse} className="mb-5" /> : null}
               {message ? <p className="mb-4 rounded-2xl bg-vpps-warning/10 px-4 py-3 text-sm font-bold text-orange-700">{message}</p> : null}
-              <div className="grid gap-4 md:grid-cols-2">
-                {candidates.map((candidate) => (
-                  <CandidateCard
-                    key={candidate.id}
-                    candidate={candidate}
-                    selected={selected[currentPost] === candidate.id}
-                    onSelect={() => {
-                      setMessage('')
-                      setSelected((value) => ({ ...value, [currentPost]: candidate.id }))
-                    }}
-                  />
-                ))}
-              </div>
+              {candidates.length === 0 ? (
+                <Card className="border-vpps-danger/20 bg-red-50 text-sm font-bold text-red-700">No approved active candidates are available for this post. Please contact the election desk.</Card>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {candidates.map((candidate) => (
+                    <CandidateCard
+                      key={candidate.id}
+                      candidate={candidate}
+                      selected={selected[currentPost] === candidate.id}
+                      onSelect={() => {
+                        setMessage('')
+                        setSelected((value) => ({ ...value, [currentPost]: candidate.id }))
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button type="button" variant="secondary" onClick={() => (postIndex === 0 ? setStep('id') : setPostIndex((value) => value - 1))}>
                   <ArrowLeft size={18} />
                   Back
                 </Button>
                 <Button type="button" onClick={handleNextPost}>
-                  {postIndex === requiredPosts.length - 1 ? 'Review Vote' : 'Continue'}
+                  {postIndex === ballotPosts.length - 1 ? 'Review Vote' : 'Continue'}
                   {selectedCandidate ? <Check size={18} /> : null}
                 </Button>
               </div>

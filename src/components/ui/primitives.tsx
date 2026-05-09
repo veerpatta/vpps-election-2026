@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, PropsWithChildren } from 'react'
+import type { ButtonHTMLAttributes, HTMLAttributes, PropsWithChildren } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '../../lib/utils'
 
@@ -25,9 +25,9 @@ export function Button({ className, variant = 'primary', ...props }: ButtonProps
   )
 }
 
-export function Card({ children, className }: PropsWithChildren<{ className?: string }>) {
+export function Card({ children, className, ...props }: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
   return (
-    <div className={cn('rounded-[1.65rem] border border-white/80 bg-white/95 p-5 shadow-soft', className)}>
+    <div className={cn('rounded-[1.65rem] border border-white/80 bg-white/95 p-5 shadow-soft', className)} {...props}>
       {children}
     </div>
   )

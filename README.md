@@ -13,6 +13,7 @@ The voter flow currently uses mock data and browser storage. Firebase Auth is us
 - Lucide React
 - React Router
 - Firebase-ready: Hosting, Firestore, Auth admin login
+- XLSX voter import/export support
 
 ## Run Locally
 
@@ -45,6 +46,13 @@ firebase deploy
 - `104728` - demo student, not voted
 - `739250` - demo student, already voted
 
+Expected house behavior:
+
+- `111111` - Test Student 001, Class X A, Red / Rana Pratap House. Sees only Rana Pratap House Captain candidates.
+- `222222` - Test Student 002, Class IX A, Blue / Rana Kumbha House. Sees only Rana Kumbha House Captain candidates.
+- `333333` - Test Teacher 001. Sees all four House Captain posts.
+- `444444` - Test Teacher 002. Sees all four House Captain posts.
+
 ## Routes
 
 - `/` redirects to `/vote`
@@ -76,6 +84,126 @@ Admin Google Sign-In setup:
 7. Do not use Email/Password login for admin in this version.
 
 The voter side does not use Google login. Students and teachers vote using their 6-digit Voting ID.
+
+## School Houses
+
+VPPS Student Council Election 2026 uses four school houses:
+
+- Red - Rana Pratap House
+- Blue - Rana Kumbha House
+- Green - Bappa Rawal House
+- Yellow - Rana Sanga House
+
+House voting rules:
+
+- Students vote for the general posts and only their own House Captain post.
+- Teachers vote for the general posts and all four House Captain posts.
+- Students do not select their house while voting.
+- The student house comes from the voter record, usually through the voter import file.
+
+General posts:
+
+- Head Boy
+- Head Girl
+- Discipline Captain
+- Sports Captain
+- Cultural Captain
+
+House Captain result posts:
+
+- Rana Pratap House Captain
+- Rana Kumbha House Captain
+- Bappa Rawal House Captain
+- Rana Sanga House Captain
+
+## Bulk Voter Import
+
+Admin path: `/admin/voters`
+
+Use **Download Template** to get the voter import columns:
+
+- Voter Name
+- Voter Type
+- Class & Section
+- Roll Number / Admission Number
+- House
+- Department / Role
+- Notes
+
+Required for students:
+
+- Voter Name
+- Voter Type
+- Class & Section
+- Roll Number / Admission Number
+- House
+
+Required for teachers:
+
+- Voter Name
+- Voter Type
+
+Accepted voter type values:
+
+- Student
+- Teacher
+- student
+- teacher
+
+Accepted house values:
+
+- Red
+- Rana Pratap
+- Rana Pratap House
+- red
+- Blue
+- Rana Kumbha
+- Rana Kumbha House
+- blue
+- Green
+- Bappa Rawal
+- Bappa Rawal House
+- green
+- Yellow
+- Rana Sanga
+- Rana Sanga House
+- yellow
+
+Teachers may keep House blank or use `all`; they still vote for all four House Captain posts.
+
+Import flow:
+
+1. Click **Upload Excel** and select `.xlsx`, `.xls`, or `.csv`.
+2. Review total rows, valid rows, errors, warnings, and generated Voting IDs.
+3. Fix blocking errors in the file if needed.
+4. Click **Import Valid Voters** only after review.
+
+The app generates random unique 6-digit Voting IDs for valid imported rows. IDs are stored as strings, so leading zero IDs such as `048913` remain intact. `000000` is never generated.
+
+Use **Export Voting ID List** to download:
+
+- Voter Name
+- Voter Type
+- Class & Section
+- Roll Number / Admission Number
+- House
+- Department / Role
+- Voting ID
+
+Use **Print List** for a clean printable class/staff distribution list.
+
+## House Hero Images
+
+Optional local house hero images go in `public/houses/`:
+
+- `rana-pratap.png`
+- `rana-kumbha.png`
+- `bappa-rawal.png`
+- `rana-sanga.png`
+
+Do not hotlink random web images. Use only school-approved images or public-domain images with permission suitable for school election use.
+
+If an image is missing, the app shows a shield-style fallback and does not crash.
 
 ## Firebase Console Checklist
 
@@ -159,7 +287,7 @@ The app uses these assets on the welcome screen, voting screens, admin login, ad
 - Add student voters
 - Add teacher voters
 - Generate 6-digit Voting IDs
-- Add CSV import/export if needed
+- Use Excel/CSV bulk voter import and Voting ID export
 - Add printable Voting ID slips/sheets
 
 ### Phase 4: Testing/UAT

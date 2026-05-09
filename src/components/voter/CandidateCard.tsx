@@ -2,6 +2,8 @@ import { CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { Candidate } from '../../types/election'
 import { initials, cn } from '../../lib/utils'
+import { isHouseCaptainPost } from '../../lib/houses'
+import { HouseBadge } from '../house/HouseBadge'
 import { Button, Card } from '../ui/primitives'
 
 interface CandidateCardProps {
@@ -27,6 +29,9 @@ export function CandidateCard({ candidate, selected, onSelect }: CandidateCardPr
             <p className="text-xs font-black uppercase tracking-[0.22em] text-vpps-richGold">{candidate.symbol}</p>
             <h3 className="mt-1 text-xl font-black text-vpps-navy">{candidate.name}</h3>
             <p className="text-sm font-semibold text-slate-600">{candidate.classSection} - {candidate.post}</p>
+            {isHouseCaptainPost(candidate.post) && candidate.house ? (
+              <HouseBadge house={candidate.house} size="sm" className="mt-3" />
+            ) : null}
           </div>
         </div>
         <p className="mt-5 rounded-2xl bg-vpps-soft p-4 text-sm font-semibold leading-6 text-slate-700">{candidate.slogan}</p>
