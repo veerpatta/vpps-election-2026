@@ -1,11 +1,11 @@
-import type { CouncilPost, HouseId } from '../types/election'
+import type { HouseId } from '../types/election'
 
 export interface HouseMeta {
   id: HouseId
   colorName: string
   name: string
   heroName: string
-  captainPost: CouncilPost
+  captainPost: string
   logoPath: string
   heroPath: string
   primaryColor: string
@@ -20,7 +20,7 @@ export interface HouseMeta {
   softGradientClass: string
   glowClass: string
   hero: string
-  postLabel: CouncilPost
+  postLabel: string
   imagePath: string
 }
 

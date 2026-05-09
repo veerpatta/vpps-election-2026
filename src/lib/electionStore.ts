@@ -1,7 +1,15 @@
-import { createDefaultStore, defaultCandidates, defaultVoters, generalPosts } from '../data/mockElectionData'
+import { createDefaultStore, defaultCandidates, defaultVoters } from '../data/mockElectionData'
+import {
+  GENERAL_POSTS,
+  HOUSE_CAPTAIN_POSTS,
+  getElectionPost,
+  getLegacyPostId,
+  getPostLabel,
+  getPostsForVoter,
+} from '../data/electionPosts'
 import type {
   Candidate,
-  CouncilPost,
+  ElectionPostId,
   ElectionStatus,
   ElectionStore,
   HouseId,
@@ -9,7 +17,7 @@ import type {
   Voter,
   Vote,
 } from '../types/election'
-import { getHouseByPost, houseCaptainPosts, houseOrder, houses, isHouseCaptainPost } from './houses'
+import { houseOrder, houses } from './houses'
 import { downloadCsv } from './utils'
 
 const STORAGE_KEY = 'vpps-election-2026-store'
@@ -22,9 +30,12 @@ function createId(prefix: string) {
 }
 
 function migrateStore(store: ElectionStore): ElectionStore {
-  const candidates = Array.isArray(store.candidates) ? [...store.candidates] : []
+  const candidates = Array.isArray(store.candidates)
+    ? store.candidates
+        .map((candidate) => migrateCandidate(candidate as Candidate & { post?: string }))
+        .filter((candidate): candidate is Candidate => Boolean(candidate))
+    : []
   const voters = Array.isArray(store.voters) ? [...store.voters] : []
-
   for (const demoVoter of defaultVoters) {
     const existingIndex = voters.findIndex((voter) => voter.votingId === demoVoter.votingId || voter.id === demoVoter.id)
     if (existingIndex >= 0) {
@@ -39,14 +50,18 @@ function migrateStore(store: ElectionStore): ElectionStore {
     }
   }
 
+  const votes = Array.isArray(store.votes)
+    ? store.votes
+        .map((vote) => migrateVote(vote as Vote & { post?: string }, candidates))
+        .filter((vote): vote is Vote => Boolean(vote))
+    : []
+
   for (const demoCandidate of defaultCandidates) {
     const existingIndex = candidates.findIndex((candidate) => candidate.id === demoCandidate.id)
     if (existingIndex >= 0) {
       candidates[existingIndex] = {
         ...demoCandidate,
-        ...candidates[existingIndex],
-        symbol: candidates[existingIndex].symbol ?? demoCandidate.symbol,
-        slogan: candidates[existingIndex].slogan ?? demoCandidate.slogan,
+        photoUrl: candidates[existingIndex].photoUrl ?? demoCandidate.photoUrl,
         approved: candidates[existingIndex].approved,
         active: candidates[existingIndex].active,
       }
@@ -59,7 +74,32 @@ function migrateStore(store: ElectionStore): ElectionStore {
     ...store,
     voters,
     candidates,
-    votes: Array.isArray(store.votes) ? store.votes : [],
+    votes,
+  }
+}
+
+function migrateCandidate(candidate: Candidate & { post?: string }): Candidate | undefined {
+  const postId = candidate.postId ?? getLegacyPostId(candidate.post, candidate.house, candidate.captainGender)
+  const post = getElectionPost(postId)
+  if (!post) return undefined
+
+  return {
+    ...candidate,
+    postId: post.id,
+    postLabel: post.label,
+    house: post.kind === 'house' ? post.house : undefined,
+    captainGender: post.kind === 'house' ? post.captainGender : undefined,
+  }
+}
+
+function migrateVote(vote: Vote & { post?: string }, candidates: Candidate[]): Vote | undefined {
+  const candidatePostId = candidates.find((candidate) => candidate.id === vote.candidateId)?.postId
+  const postId = vote.postId ?? getLegacyPostId(vote.post) ?? candidatePostId
+  if (!postId || !getElectionPost(postId)) return undefined
+  return {
+    ...vote,
+    postId,
+    post: getPostLabel(postId),
   }
 }
 
@@ -106,36 +146,34 @@ export function getCandidates() {
   return readStore().candidates
 }
 
-export function getVotingCandidates(post?: CouncilPost) {
+export function getVotingCandidates(postId?: ElectionPostId) {
   return getCandidates().filter((candidate) => {
     if (!candidate.approved || !candidate.active) return false
-    if (!post) return true
-    if (!isHouseCaptainPost(post)) return candidate.post === post
-
-    const house = getHouseByPost(post)
-    if (!house) return isHouseCaptainPost(candidate.post)
-    return isHouseCaptainPost(candidate.post) && candidate.house === house
+    if (!postId) return true
+    return candidate.postId === postId
   })
 }
 
-export function getBallotPosts(voter: Voter): CouncilPost[] {
-  if (voter.voterType === 'teacher') return [...generalPosts, ...houseCaptainPosts]
-  if (voter.house && voter.house !== 'all') return [...generalPosts, houses[voter.house].postLabel]
-  return [...generalPosts]
+export function getBallotPosts(voter: Voter) {
+  return getPostsForVoter(voter)
 }
 
 export function saveCandidate(
-  candidate: Partial<Candidate> & Pick<Candidate, 'name' | 'classSection' | 'post'>,
+  candidate: Partial<Candidate> & Pick<Candidate, 'name' | 'classSection' | 'postId'>,
 ) {
   const store = readStore()
   const index = candidate.id ? store.candidates.findIndex((item) => item.id === candidate.id) : -1
+  const post = getElectionPost(candidate.postId)
+  if (!post) throw new Error('Please select a valid post.')
   const next: Candidate = {
     id: candidate.id ?? createId('candidate'),
     name: candidate.name,
     classSection: candidate.classSection,
     rollNumber: candidate.rollNumber,
-    post: candidate.post,
-    house: candidate.house,
+    postId: post.id,
+    postLabel: post.label,
+    house: post.kind === 'house' ? post.house : undefined,
+    captainGender: post.kind === 'house' ? post.captainGender : undefined,
     photoUrl: candidate.photoUrl,
     symbol: candidate.symbol,
     slogan: candidate.slogan,
@@ -247,11 +285,13 @@ export function downloadVoterTemplateCsv() {
 
 export function exportResultsCsv() {
   const rows = [
-    ['Post', 'House', 'Candidate', 'Class', 'Votes', 'Result'],
+    ['Post ID', 'Post', 'House', 'Captain Category', 'Candidate', 'Class', 'Votes', 'Result'],
     ...getResults().flatMap((result) =>
       result.rows.map((row) => [
-        result.post,
+        result.post.id,
+        result.post.label,
         houseLabel(row.candidate.house),
+        row.candidate.captainGender ?? '',
         row.candidate.name,
         row.candidate.classSection,
         String(row.votes),
@@ -268,15 +308,13 @@ function countVotesForCandidate(votes: Vote[], candidate: Candidate) {
 
 export function getResults(): PostResult[] {
   const store = readStore()
-  const resultPosts = [...generalPosts, ...houseCaptainPosts]
+  const resultPosts = [...GENERAL_POSTS, ...HOUSE_CAPTAIN_POSTS]
 
   return resultPosts.map((post) => {
-    const house = getHouseByPost(post)
     const rows = store.candidates
       .filter((candidate) => {
         if (!candidate.approved || !candidate.active) return false
-        if (!house) return candidate.post === post
-        return isHouseCaptainPost(candidate.post) && candidate.house === house
+        return candidate.postId === post.id
       })
       .map((candidate) => ({
         candidate,
@@ -339,7 +377,7 @@ export function validateVotingId(votingId: string) {
   return { ok: true as const, voter }
 }
 
-export function submitVote(votingId: string, selectedCandidateIds: Partial<Record<CouncilPost, string>>) {
+export function submitVote(votingId: string, selectedCandidateIds: Partial<Record<ElectionPostId, string>>) {
   const store = readStore()
   const voter = store.voters.find((item) => item.votingId === votingId)
 
@@ -352,20 +390,19 @@ export function submitVote(votingId: string, selectedCandidateIds: Partial<Recor
   for (const post of ballotPosts) {
     const allowedForPost = store.candidates.filter((candidate) => {
       if (!candidate.approved || !candidate.active) return false
-      if (!isHouseCaptainPost(post)) return candidate.post === post
-      const house = getHouseByPost(post)
-      return Boolean(house && isHouseCaptainPost(candidate.post) && candidate.house === house)
+      return candidate.postId === post.id
     })
-    const candidate = allowedForPost.find((item) => item.id === selectedCandidateIds[post])
-    if (!candidate) throw new Error(`Please select one candidate for ${post}.`)
+    const candidate = allowedForPost.find((item) => item.id === selectedCandidateIds[post.id])
+    if (!candidate) throw new Error(`Please select one candidate for ${post.label}.`)
   }
 
   const timestamp = new Date().toISOString()
   const votes: Vote[] = ballotPosts.map((post) => ({
     id: createId('vote'),
     electionId: store.election.id,
-    post,
-    candidateId: selectedCandidateIds[post] as string,
+    postId: post.id,
+    post: post.label,
+    candidateId: selectedCandidateIds[post.id] as string,
     timestamp,
   }))
 

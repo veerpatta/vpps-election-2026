@@ -1,5 +1,6 @@
-import type { CouncilPost, HouseId } from '../types/election'
 import { houseOrder, houses, type HouseMeta } from '../data/houses'
+import { getPostHouse, isHouseCaptainPostId } from '../data/electionPosts'
+import type { HouseId } from '../types/election'
 
 export type { HouseMeta }
 export { houseOrder, houses }
@@ -11,12 +12,12 @@ export function getHouseMeta(house?: HouseId | 'all') {
   return houses[house]
 }
 
-export function getHouseByPost(post: CouncilPost) {
-  return houseOrder.find((house) => houses[house].captainPost === post)
+export function getHouseByPost(postId?: string) {
+  return getPostHouse(postId) ?? houseOrder.find((house) => houses[house].captainPost === postId)
 }
 
-export function isHouseCaptainPost(post?: CouncilPost) {
-  return post === 'House Captain' || Boolean(post && getHouseByPost(post))
+export function isHouseCaptainPost(postId?: string) {
+  return postId === 'House Captain' || isHouseCaptainPostId(postId) || Boolean(postId && getHouseByPost(postId))
 }
 
 export function normalizeHouse(value: unknown): HouseId | 'all' | undefined {

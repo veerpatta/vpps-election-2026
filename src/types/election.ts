@@ -8,20 +8,43 @@ export type VoterType = 'student' | 'teacher'
 
 export type HouseId = 'red' | 'blue' | 'green' | 'yellow'
 
-export type CouncilPost =
-  | 'Head Boy'
-  | 'Head Girl'
-  | 'Discipline Captain'
-  | 'Sports Captain'
-  | 'Cultural Captain'
-  | 'House Captain'
-  | 'Rana Pratap House Captain'
-  | 'Rana Kumbha House Captain'
-  | 'Bappa Rawal House Captain'
-  | 'Rana Sanga House Captain'
-  | 'House Captain Boy'
-  | 'House Captain Girl'
-  | 'Vice Captain'
+export type CaptainGender = 'boys' | 'girls'
+
+export type GeneralPostId =
+  | 'head-boy'
+  | 'head-girl'
+  | 'discipline-captain'
+  | 'sports-captain'
+  | 'cultural-captain'
+
+export type HouseCaptainPostId =
+  | 'red-boys-house-captain'
+  | 'red-girls-house-captain'
+  | 'blue-boys-house-captain'
+  | 'blue-girls-house-captain'
+  | 'green-boys-house-captain'
+  | 'green-girls-house-captain'
+  | 'yellow-boys-house-captain'
+  | 'yellow-girls-house-captain'
+
+export type ElectionPostId = GeneralPostId | HouseCaptainPostId
+export type CouncilPost = ElectionPostId
+
+export interface GeneralElectionPost {
+  id: GeneralPostId
+  label: string
+  kind: 'general'
+}
+
+export interface HouseCaptainElectionPost {
+  id: HouseCaptainPostId
+  label: string
+  kind: 'house'
+  house: HouseId
+  captainGender: CaptainGender
+}
+
+export type ElectionPost = GeneralElectionPost | HouseCaptainElectionPost
 
 export interface Election {
   id: string
@@ -38,8 +61,11 @@ export interface Candidate {
   name: string
   classSection: string
   rollNumber?: string
-  post: CouncilPost
+  postId: ElectionPostId
+  post?: string
+  postLabel?: string
   house?: HouseId
+  captainGender?: CaptainGender
   photoUrl?: string
   symbol?: string
   slogan?: string
@@ -64,7 +90,8 @@ export interface Voter {
 export interface Vote {
   id: string
   electionId: string
-  post: CouncilPost
+  postId: ElectionPostId
+  post?: string
   candidateId: string
   timestamp: string
 }
@@ -83,7 +110,7 @@ export interface ResultRow {
 }
 
 export interface PostResult {
-  post: CouncilPost
+  post: ElectionPost
   totalVotes: number
   winner?: Candidate
   rows: ResultRow[]

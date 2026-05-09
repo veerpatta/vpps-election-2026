@@ -12,8 +12,8 @@ import { CandidateCard } from '../../components/voter/CandidateCard'
 import { Button, Card, PageBackground } from '../../components/ui/primitives'
 import { getBallotPosts, getVotingCandidates, submitVote, validateVotingId } from '../../lib/electionStore'
 import { cn } from '../../lib/utils'
-import { getHouseByPost, houseOrder } from '../../lib/houses'
-import type { CouncilPost, Voter as VoterRecord } from '../../types/election'
+import { houseOrder } from '../../lib/houses'
+import type { ElectionPostId, Voter as VoterRecord } from '../../types/election'
 
 type Step = 'welcome' | 'id' | 'confirm' | 'select' | 'review' | 'thanks'
 
@@ -56,17 +56,17 @@ export function VotePage() {
   const [votingId, setVotingId] = useState('')
   const [message, setMessage] = useState('')
   const [postIndex, setPostIndex] = useState(0)
-  const [selected, setSelected] = useState<Partial<Record<CouncilPost, string>>>({})
+  const [selected, setSelected] = useState<Partial<Record<ElectionPostId, string>>>({})
   const [voter, setVoter] = useState<VoterRecord | null>(null)
 
   const ballotPosts = useMemo(() => (voter ? getBallotPosts(voter) : []), [voter])
   const currentPost = ballotPosts[postIndex]
-  const currentHouse = currentPost ? getHouseByPost(currentPost) : undefined
-  const candidates = useMemo(() => (currentPost ? getVotingCandidates(currentPost) : []), [currentPost])
-  const selectedCandidate = currentPost ? candidates.find((candidate) => candidate.id === selected[currentPost]) : undefined
+  const currentHouse = currentPost?.kind === 'house' ? currentPost.house : undefined
+  const candidates = useMemo(() => (currentPost ? getVotingCandidates(currentPost.id) : []), [currentPost])
+  const selectedCandidate = currentPost ? candidates.find((candidate) => candidate.id === selected[currentPost.id]) : undefined
   const selectedRows = ballotPosts.map((post) => ({
     post,
-    candidate: getVotingCandidates(post).find((candidate) => candidate.id === selected[post]),
+    candidate: getVotingCandidates(post.id).find((candidate) => candidate.id === selected[post.id]),
   }))
 
   function resetFlow() {
@@ -93,8 +93,8 @@ export function VotePage() {
 
   function handleNextPost() {
     if (!currentPost) return
-    if (!selected[currentPost]) {
-      setMessage(`Please select one candidate for ${currentPost}.`)
+    if (!selected[currentPost.id]) {
+      setMessage(`Please select one candidate for ${currentPost.label}.`)
       return
     }
     setMessage('')
@@ -103,7 +103,7 @@ export function VotePage() {
   }
 
   function handleSubmitFinalVote() {
-    const complete = ballotPosts.every((post) => Boolean(selected[post]))
+    const complete = ballotPosts.every((post) => Boolean(selected[post.id]))
     if (!complete) {
       setMessage('Please complete every post before submitting your vote.')
       setStep('select')
@@ -233,8 +233,8 @@ export function VotePage() {
                   <div className="mt-5 rounded-2xl border border-vpps-navy/10 bg-vpps-soft/80 p-4">
                     <p className="text-sm font-bold text-slate-700">
                       {voter.voterType === 'student'
-                        ? 'You will vote for general posts and only your own House Captain.'
-                        : 'You will vote for general posts and all four House Captains.'}
+                        ? 'You will vote for general posts and both Boys and Girls House Captain for your own house.'
+                        : 'You will vote for general posts and all eight House Captain contests.'}
                     </p>
                     <p className="mt-2 text-xs font-bold text-slate-500">Total screens: {ballotPosts.length}</p>
                   </div>
@@ -244,7 +244,7 @@ export function VotePage() {
           ) : null}
 
           {step === 'select' && currentPost ? (
-            <motion.div key={`select-${currentPost}`} {...pageMotion}>
+            <motion.div key={`select-${currentPost.id}`} {...pageMotion}>
               <ScreenFitShell
                 header={
                   <div className="grid gap-2">
@@ -253,7 +253,7 @@ export function VotePage() {
                       <div className="flex items-end justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-xs font-black uppercase tracking-[0.18em] text-vpps-richGold">Step {postIndex + 1} of {ballotPosts.length}</p>
-                          <h1 className="truncate text-2xl font-black sm:text-3xl">{currentPost}</h1>
+                          <h1 className="truncate text-2xl font-black sm:text-3xl">{currentPost.label}</h1>
                         </div>
                         {voter ? (
                           <div className="hidden shrink-0 items-center gap-2 text-xs font-bold text-slate-600 sm:flex">
@@ -286,7 +286,7 @@ export function VotePage() {
                     {currentHouse ? <HouseHeroCard house={currentHouse} compact selected className="h-full min-h-0" /> : (
                       <Card className="h-full p-4">
                         <p className="text-sm font-black uppercase tracking-[0.18em] text-vpps-richGold">Candidate Selection</p>
-                        <h2 className="mt-2 text-2xl font-black">{currentPost}</h2>
+                        <h2 className="mt-2 text-2xl font-black">{currentPost.label}</h2>
                         <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">Select one candidate. Your choice can be reviewed before final submission.</p>
                       </Card>
                     )}
@@ -303,10 +303,10 @@ export function VotePage() {
                             <CandidateCard
                               key={candidate.id}
                               candidate={candidate}
-                              selected={selected[currentPost] === candidate.id}
+                              selected={selected[currentPost.id] === candidate.id}
                               onSelect={() => {
                                 setMessage('')
-                                setSelected((value) => ({ ...value, [currentPost]: candidate.id }))
+                                setSelected((value) => ({ ...value, [currentPost.id]: candidate.id }))
                               }}
                             />
                           ))}
@@ -337,10 +337,10 @@ export function VotePage() {
                   </div>
                   <div className="mt-4 min-h-0 overflow-y-auto rounded-2xl border border-dashed border-vpps-navy/20 bg-vpps-soft/60">
                     {selectedRows.map((row) => (
-                      <div key={row.post} className="flex items-center gap-3 border-b border-vpps-navy/10 bg-white px-3 py-3 last:border-b-0">
+                      <div key={row.post.id} className="flex items-center gap-3 border-b border-vpps-navy/10 bg-white px-3 py-3 last:border-b-0">
                         <CandidateAvatar name={row.candidate?.name ?? 'Not selected'} imageUrl={row.candidate?.photoUrl} house={row.candidate?.house} size="sm" />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-black text-vpps-navy">{row.post}</p>
+                          <p className="truncate text-sm font-black text-vpps-navy">{row.post.label}</p>
                           <p className="truncate text-sm font-bold text-slate-700">{row.candidate?.name ?? 'Not selected'}</p>
                         </div>
                       </div>

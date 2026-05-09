@@ -2,9 +2,11 @@ import { CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { Candidate } from '../../types/election'
 import { cn } from '../../lib/utils'
-import { getHouseMeta, isHouseCaptainPost } from '../../lib/houses'
+import { getPostLabel, isHouseCaptainPostId } from '../../data/electionPosts'
+import { getHouseMeta } from '../../lib/houses'
 import { CandidateAvatar } from '../candidates/CandidateAvatar'
 import { HouseBadge } from '../house/HouseBadge'
+import { StatusPill } from '../ui/primitives'
 import { Button, Card } from '../ui/primitives'
 
 interface CandidateCardProps {
@@ -15,7 +17,7 @@ interface CandidateCardProps {
 
 export function CandidateCard({ candidate, selected, onSelect }: CandidateCardProps) {
   const houseMeta = candidate.house ? getHouseMeta(candidate.house) : undefined
-  const isHouseCandidate = isHouseCaptainPost(candidate.post) && houseMeta
+  const isHouseCandidate = isHouseCaptainPostId(candidate.postId) && houseMeta
 
   return (
     <motion.div animate={{ scale: selected ? 1.01 : 1 }} whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 260, damping: 22 }}>
@@ -44,9 +46,14 @@ export function CandidateCard({ candidate, selected, onSelect }: CandidateCardPr
           <div className="min-w-0 flex-1">
             <h3 className="truncate pr-8 text-lg font-black text-vpps-navy sm:text-xl">{candidate.name}</h3>
             <p className="mt-1 text-sm font-semibold text-slate-600">{candidate.classSection}</p>
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-vpps-richGold">{candidate.post}</p>
-            {isHouseCaptainPost(candidate.post) && candidate.house ? (
-              <HouseBadge house={candidate.house} size="sm" className="mt-2" />
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-vpps-richGold">{getPostLabel(candidate.postId)}</p>
+            {isHouseCaptainPostId(candidate.postId) && candidate.house ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <HouseBadge house={candidate.house} size="sm" />
+                <StatusPill tone={candidate.captainGender === 'girls' ? 'orange' : 'navy'}>
+                  {candidate.captainGender === 'girls' ? 'Girls' : 'Boys'}
+                </StatusPill>
+              </div>
             ) : null}
           </div>
         </div>

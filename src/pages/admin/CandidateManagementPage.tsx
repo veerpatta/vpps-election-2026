@@ -3,17 +3,16 @@ import { CheckCircle2, Pencil, Plus, ShieldX, UserRoundX } from 'lucide-react'
 import { CandidateAvatar } from '../../components/candidates/CandidateAvatar'
 import { HouseBadge } from '../../components/house/HouseBadge'
 import { Button, Card, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
-import { supportedPosts } from '../../data/mockElectionData'
+import { SUPPORTED_POSTS, getElectionPost, getPostLabel } from '../../data/electionPosts'
 import { getCandidates, saveCandidate, toggleCandidate } from '../../lib/electionStore'
-import { getHouseByPost, houseOrder, houses, isHouseCaptainPost } from '../../lib/houses'
-import type { Candidate, CouncilPost, HouseId } from '../../types/election'
+import { houses } from '../../lib/houses'
+import type { Candidate, ElectionPostId } from '../../types/election'
 
 const blankCandidate = {
   name: '',
   classSection: '',
   rollNumber: '',
-  post: 'Head Boy' as CouncilPost,
-  house: undefined as HouseId | undefined,
+  postId: 'head-boy' as ElectionPostId,
   photoUrl: '',
   approved: true,
   active: true,
@@ -29,18 +28,13 @@ export function CandidateManagementPage() {
   }
 
   function handleSave() {
-    if (!form.name || !form.classSection || !form.post) return
-    if (isHouseCaptainPost(form.post) && !form.house) {
-      setMessage('Please select the candidate house for House Captain.')
-      return
-    }
+    if (!form.name || !form.classSection || !form.postId) return
     saveCandidate({
       id: form.id,
       name: form.name,
       classSection: form.classSection,
       rollNumber: form.rollNumber,
-      post: form.post,
-      house: isHouseCaptainPost(form.post) ? form.house : undefined,
+      postId: form.postId,
       photoUrl: form.photoUrl,
       symbol: form.symbol,
       slogan: form.slogan,
@@ -65,33 +59,33 @@ export function CandidateManagementPage() {
           <Field label="Roll Number"><TextInput value={form.rollNumber ?? ''} onChange={(event) => setForm({ ...form, rollNumber: event.target.value })} /></Field>
           <Field label="Post Applied For">
             <Select
-              value={form.post}
+              value={form.postId}
               onChange={(event) => {
-                const post = event.target.value as CouncilPost
-                const house = getHouseByPost(post)
+                const postId = event.target.value as ElectionPostId
+                const post = getElectionPost(postId)
                 setMessage('')
-                setForm({ ...form, post, house: isHouseCaptainPost(post) ? house ?? form.house : undefined })
+                setForm({
+                  ...form,
+                  postId,
+                  house: post?.kind === 'house' ? post.house : undefined,
+                  captainGender: post?.kind === 'house' ? post.captainGender : undefined,
+                })
               }}
             >
-              {supportedPosts.map((post) => <option key={post}>{post}</option>)}
+              {SUPPORTED_POSTS.map((post) => <option key={post.id} value={post.id}>{post.label}</option>)}
             </Select>
           </Field>
-          {isHouseCaptainPost(form.post) ? (
-            <Field label="House">
-              <Select value={form.house ?? ''} onChange={(event) => { setMessage(''); setForm({ ...form, house: event.target.value as HouseId }) }}>
-                <option value="">Select House</option>
-                {houseOrder.map((house) => <option key={house} value={house}>{houses[house].colorName} - {houses[house].name}</option>)}
-              </Select>
-            </Field>
-          ) : null}
           <Field label="Candidate Photo"><TextInput value={form.photoUrl ?? ''} onChange={(event) => setForm({ ...form, photoUrl: event.target.value })} placeholder="Image URL optional" /></Field>
           <div className="flex items-end">
             <Button type="button" onClick={handleSave} className="w-full"><Plus size={18} />{form.id ? 'Save Candidate' : 'Add Candidate'}</Button>
           </div>
         </div>
-        {isHouseCaptainPost(form.post) && form.house ? (
-          <div className="mt-4 rounded-3xl border border-vpps-navy/10 bg-vpps-soft/70 p-4">
+        {form.house ? (
+          <div className="mt-4 flex flex-wrap gap-2 rounded-3xl border border-vpps-navy/10 bg-vpps-soft/70 p-4">
             <HouseBadge house={form.house} showHeroName />
+            <StatusPill tone={form.captainGender === 'girls' ? 'orange' : 'navy'}>
+              {form.captainGender === 'girls' ? 'Girls House Captain' : 'Boys House Captain'}
+            </StatusPill>
           </div>
         ) : null}
         {message ? <p className="mt-4 rounded-2xl bg-vpps-danger/10 px-4 py-3 text-sm font-bold text-red-700">{message}</p> : null}
@@ -116,8 +110,13 @@ export function CandidateManagementPage() {
                       <StatusPill tone={candidate.active ? 'navy' : 'red'}>{candidate.active ? 'Active' : 'Inactive'}</StatusPill>
                       {candidate.house ? <HouseBadge house={candidate.house} size="sm" /> : null}
                     </div>
-                    <p className="mt-2 text-sm font-semibold text-slate-600">{candidate.classSection} - {candidate.post}</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-600">{candidate.classSection} - {getPostLabel(candidate.postId)}</p>
                     {candidate.rollNumber ? <p className="mt-1 text-xs font-bold text-slate-500">Roll No. {candidate.rollNumber}</p> : null}
+                    {candidate.captainGender ? (
+                      <StatusPill tone={candidate.captainGender === 'girls' ? 'orange' : 'navy'}>
+                        {candidate.captainGender === 'girls' ? 'Girls' : 'Boys'}
+                      </StatusPill>
+                    ) : null}
                   </div>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">

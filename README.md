@@ -54,10 +54,10 @@ firebase deploy
 
 Expected house behavior:
 
-- `111111` - Test Student 001, Class X A, Red / Rana Pratap House. Sees only Rana Pratap House Captain candidates.
-- `222222` - Test Student 002, Class IX A, Blue / Rana Kumbha House. Sees only Rana Kumbha House Captain candidates.
-- `333333` - Test Teacher 001. Sees all four House Captain posts.
-- `444444` - Test Teacher 002. Sees all four House Captain posts.
+- `111111` - Test Student 001, Class X A, Red / Rana Pratap House. Sees Rana Pratap Boys House Captain and Rana Pratap Girls House Captain only.
+- `222222` - Test Student 002, Class IX A, Blue / Rana Kumbha House. Sees Rana Kumbha Boys House Captain and Rana Kumbha Girls House Captain only.
+- `333333` - Test Teacher 001. Sees all eight House Captain contests.
+- `444444` - Test Teacher 002. Sees all eight House Captain contests.
 
 ## Routes
 
@@ -126,8 +126,9 @@ VPPS Student Council Election 2026 uses four school houses:
 
 House voting rules:
 
-- Students vote for the general posts and only their own House Captain post.
-- Teachers vote for the general posts and all four House Captain posts.
+- Students vote for the general posts and only their own house's two House Captain contests.
+- For their own house, students vote for both Boys House Captain and Girls House Captain.
+- Teachers vote for the general posts and all eight House Captain contests.
 - Students do not select their house while voting.
 - The student house comes from the voter record, usually through the voter import file.
 
@@ -139,12 +140,16 @@ General posts:
 - Sports Captain
 - Cultural Captain
 
-House Captain result posts:
+House Captain contests:
 
-- Rana Pratap House Captain
-- Rana Kumbha House Captain
-- Bappa Rawal House Captain
-- Rana Sanga House Captain
+- Rana Pratap Boys House Captain
+- Rana Pratap Girls House Captain
+- Rana Kumbha Boys House Captain
+- Rana Kumbha Girls House Captain
+- Bappa Rawal Boys House Captain
+- Bappa Rawal Girls House Captain
+- Rana Sanga Boys House Captain
+- Rana Sanga Girls House Captain
 
 ## Bulk Voter Import
 
@@ -199,7 +204,7 @@ Accepted house values:
 - Rana Sanga House
 - yellow
 
-Teachers may keep House blank or use `all`; they still vote for all four House Captain posts.
+Teachers may keep House blank or use `all`; they still vote for all eight House Captain contests.
 
 Import flow:
 
@@ -263,7 +268,7 @@ GitHub repository setup:
 1. Open the GitHub repository settings.
 2. Go to **Pages**.
 3. Set **Source** to **GitHub Actions**.
-4. Push to `main`. The workflow also accepts `master` because this repo currently uses `master` as its default branch.
+4. Push to `main` or `master`. The workflow triggers on both because this repo currently uses `master` as its default branch.
 5. Expected site URL: `https://veerpatta.github.io/vpps-election-2026/`
 
 The public voter route will be:
