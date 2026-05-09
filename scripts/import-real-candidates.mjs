@@ -30,6 +30,7 @@ function candidateId(index, record) {
 
 function imageUrlFor(record) {
   if (record.finalImagePath) return record.finalImagePath
+  if (record.extractedOriginalPath) return record.extractedOriginalPath
   if (record.placeholderUsed) return record.finalImagePath
   return ''
 }
