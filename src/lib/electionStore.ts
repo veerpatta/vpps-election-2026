@@ -1,4 +1,9 @@
-import { createDefaultStore, defaultCandidates, defaultVoters } from '../data/mockElectionData'
+import {
+  createDefaultStore,
+  defaultCandidates,
+  defaultVoters,
+  OFFICIAL_VOTER_DATASET_VERSION,
+} from '../data/mockElectionData'
 import {
   GENERAL_POSTS,
   HOUSE_CAPTAIN_POSTS,
@@ -21,6 +26,7 @@ import { houseOrder, houses } from './houses'
 import { downloadCsv } from './utils'
 
 const STORAGE_KEY = 'vpps-election-2026-store'
+const VOTER_VERSION_KEY = 'vpps-election-2026-voter-version'
 
 function createId(prefix: string) {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -42,18 +48,45 @@ function migrateStore(store: ElectionStore): ElectionStore {
     candidates = defaultCandidates.map((candidate) => ({ ...candidate }))
   }
 
-  const voters = Array.isArray(store.voters) ? [...store.voters] : []
-  for (const demoVoter of defaultVoters) {
-    const existingIndex = voters.findIndex((voter) => voter.votingId === demoVoter.votingId || voter.id === demoVoter.id)
-    if (existingIndex >= 0) {
-      voters[existingIndex] = {
-        ...demoVoter,
-        hasVoted: voters[existingIndex].hasVoted,
-        votedAt: voters[existingIndex].votedAt,
-        active: voters[existingIndex].active,
+  const previousVoters = Array.isArray(store.voters) ? store.voters : []
+  let voters: Voter[]
+
+  // Detect when the official voter dataset has been updated. If the stored
+  // version doesn't match the bundled one, replace voters with the official
+  // roster while preserving voted/active state for matching Voting IDs.
+  const storedVoterVersion = readVoterVersion()
+  const datasetChanged = storedVoterVersion !== OFFICIAL_VOTER_DATASET_VERSION
+  if (datasetChanged && defaultVoters.length > 0) {
+    const previousByVotingId = new Map(previousVoters.map((voter) => [voter.votingId, voter]))
+    voters = defaultVoters.map((demoVoter) => {
+      const existing = previousByVotingId.get(demoVoter.votingId)
+      if (existing) {
+        return {
+          ...demoVoter,
+          hasVoted: existing.hasVoted,
+          votedAt: existing.votedAt,
+          active: existing.active,
+        }
       }
-    } else {
-      voters.push({ ...demoVoter })
+      return { ...demoVoter }
+    })
+    writeVoterVersion(OFFICIAL_VOTER_DATASET_VERSION)
+  } else {
+    voters = [...previousVoters]
+    for (const demoVoter of defaultVoters) {
+      const existingIndex = voters.findIndex(
+        (voter) => voter.votingId === demoVoter.votingId || voter.id === demoVoter.id,
+      )
+      if (existingIndex >= 0) {
+        voters[existingIndex] = {
+          ...demoVoter,
+          hasVoted: voters[existingIndex].hasVoted,
+          votedAt: voters[existingIndex].votedAt,
+          active: voters[existingIndex].active,
+        }
+      } else {
+        voters.push({ ...demoVoter })
+      }
     }
   }
 
@@ -111,6 +144,22 @@ function migrateVote(vote: Vote & { post?: string }, candidates: Candidate[]): V
     ...vote,
     postId,
     post: getPostLabel(postId),
+  }
+}
+
+function readVoterVersion(): string | null {
+  try {
+    return localStorage.getItem(VOTER_VERSION_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writeVoterVersion(value: string) {
+  try {
+    localStorage.setItem(VOTER_VERSION_KEY, value)
+  } catch {
+    // ignore — non-critical metadata
   }
 }
 

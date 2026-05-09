@@ -1,6 +1,9 @@
 import type { Candidate, Election, ElectionPostId, Voter, Vote } from '../types/election'
 import { GENERAL_POSTS, SUPPORTED_POSTS } from './electionPosts'
 import { realCandidates } from './realCandidates'
+import { officialVoters, OFFICIAL_VOTER_DATASET_VERSION } from './officialVoters'
+
+export { OFFICIAL_VOTER_DATASET_VERSION }
 
 const now = new Date().toISOString()
 
@@ -76,20 +79,14 @@ const demoCandidates: Candidate[] = [
 
 export const defaultCandidates: Candidate[] = realCandidates.length ? realCandidates : demoCandidates
 
-export const defaultVoters: Voter[] = [
-  { id: 'v-1', voterName: 'Test Student 001', voterType: 'student', classSection: 'X A', rollNumber: '01', house: 'red', votingId: '111111', hasVoted: false, active: true },
-  { id: 'v-2', voterName: 'Test Student 002', voterType: 'student', classSection: 'IX A', rollNumber: '02', house: 'blue', votingId: '222222', hasVoted: false, active: true },
-  { id: 'v-3', voterName: 'Test Teacher 001', voterType: 'teacher', departmentOrRole: 'Mathematics', votingId: '333333', hasVoted: false, active: true },
-  { id: 'v-4', voterName: 'Test Teacher 002', voterType: 'teacher', departmentOrRole: 'Science', votingId: '444444', hasVoted: false, active: true },
-  { id: 'v-5', voterName: 'Kunal Meena', voterType: 'student', classSection: 'IX B', rollNumber: '13', house: 'green', votingId: '482913', hasVoted: true, votedAt: now, active: true },
-  { id: 'v-6', voterName: 'Simran Kaur', voterType: 'student', classSection: 'XI C', rollNumber: '06', house: 'yellow', votingId: '104728', hasVoted: false, active: true },
-  { id: 'v-7', voterName: 'Aditya Soni', voterType: 'student', classSection: 'VIII A', rollNumber: '25', house: 'red', votingId: '739250', hasVoted: true, votedAt: now, active: true },
-  { id: 'v-8', voterName: 'Tanya Jain', voterType: 'student', classSection: 'VII B', rollNumber: '08', house: 'blue', votingId: '620184', hasVoted: false, active: true },
-  { id: 'v-9', voterName: 'Mohit Rathore', voterType: 'student', classSection: 'XII A', rollNumber: '19', house: 'green', votingId: '581406', hasVoted: false, active: true },
-  { id: 'v-10', voterName: 'Bhavna Gurjar', voterType: 'student', classSection: 'VI C', rollNumber: '10', house: 'yellow', votingId: '906317', hasVoted: false, active: true },
-  { id: 'v-11', voterName: 'Rajesh Sir', voterType: 'teacher', departmentOrRole: 'Social Science', votingId: '715294', hasVoted: true, votedAt: now, active: true },
-  { id: 'v-12', voterName: 'Kavita Maam', voterType: 'teacher', departmentOrRole: 'English', votingId: '863520', hasVoted: false, active: true },
+const demoVoters: Voter[] = [
+  { id: 'v-1', voterName: 'Test Student 001', voterType: 'student', classSection: 'Class 10', rollNumber: '01', house: 'red', votingId: '111111', hasVoted: false, active: true },
+  { id: 'v-2', voterName: 'Test Student 002', voterType: 'student', classSection: 'Class 9', rollNumber: '02', house: 'blue', votingId: '222222', hasVoted: false, active: true },
+  { id: 'v-3', voterName: 'Test Teacher 001', voterType: 'teacher', departmentOrRole: 'Mathematics', house: 'all', votingId: '333333', hasVoted: false, active: true },
+  { id: 'v-4', voterName: 'Test Teacher 002', voterType: 'teacher', departmentOrRole: 'Science', house: 'all', votingId: '444444', hasVoted: false, active: true },
 ]
+
+export const defaultVoters: Voter[] = officialVoters.length ? officialVoters : demoVoters
 
 const demoVotes: Vote[] = [
   { id: 'vote-1', electionId: defaultElection.id, postId: 'head-boy', candidateId: 'c-1', timestamp: now },

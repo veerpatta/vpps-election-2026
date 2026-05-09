@@ -10,6 +10,7 @@
     "extract:candidate-photos": "node scripts/extract-candidate-photos.mjs",
     "generate:candidate-portraits": "node scripts/generate-candidate-portraits.mjs",
     "import:real-candidates": "node scripts/import-real-candidates.mjs",
+    "import:official-voters": "node scripts/import-official-voters.mjs",
     "import:house-assets": "node scripts/import-house-assets.mjs",
     "process:candidates": "node scripts/process-candidates.mjs",
     "verify:election-posts": "node scripts/verify-election-posts.mjs",
