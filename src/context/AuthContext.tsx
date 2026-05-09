@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from 'react'
 import {
+  GoogleAuthProvider,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   type User,
 } from 'firebase/auth'
 import { auth } from '../lib/firebase'
 import { AuthContext } from './auth'
+
+const ALLOWED_ADMIN_EMAIL = 'raj@vpps.co.in'
+
+function isApprovedAdmin(user: User | null) {
+  return user?.email?.toLowerCase() === ALLOWED_ADMIN_EMAIL
+}
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null)
@@ -23,11 +30,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
     })
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
+  const loginWithGoogle = useCallback(async () => {
     if (!auth) {
       throw new Error('Firebase Auth is not configured.')
     }
-    await signInWithEmailAndPassword(auth, email.trim(), password)
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({
+      prompt: 'select_account',
+    })
+    await signInWithPopup(auth, provider)
   }, [])
 
   const logout = useCallback(async () => {
@@ -38,14 +49,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
     await signOut(auth)
   }, [])
 
+  const isAllowedAdmin = isApprovedAdmin(user)
+
   const value = useMemo(
     () => ({
       user,
       loading,
-      login,
+      isAllowedAdmin,
+      loginWithGoogle,
       logout,
     }),
-    [loading, login, logout, user],
+    [isAllowedAdmin, loading, loginWithGoogle, logout, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

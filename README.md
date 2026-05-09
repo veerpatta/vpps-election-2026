@@ -56,7 +56,7 @@ firebase deploy
 - `/admin/control` voting control
 - `/admin/results` result sheet
 
-## Firebase Admin Login Setup
+## Firebase Google Sign-In Setup
 
 Firebase project created:
 
@@ -65,29 +65,17 @@ Firebase project created:
 
 Add real Firebase web app values to `.env.local` using the keys from `.env.example`. Keep `.env.local` private and never commit it.
 
-Enable Firebase Authentication:
+Admin Google Sign-In setup:
 
 1. Open Firebase Console.
-2. Go to Build > Authentication.
-3. Click Get Started if needed.
-4. Go to Sign-in method.
-5. Enable Email/Password.
-6. Save.
+2. Go to Authentication.
+3. Enable Google provider.
+4. Use the school support email.
+5. Add Firebase web config into `.env.local`.
+6. Admin access is restricted in the app to `raj@vpps.co.in`.
+7. Do not use Email/Password login for admin in this version.
 
-Create the admin user:
-
-- Admin email: `raj@vpps.co.in`
-- Never commit, print, or document the admin password.
-- Create the user manually in Firebase Console > Authentication > Users > Add user, or use the local script below.
-
-Local script option:
-
-```powershell
-$env:ADMIN_EMAIL="raj@vpps.co.in"
-npm run admin:create-user
-```
-
-The script asks for the password in the local terminal only. It uses Firebase Admin SDK with Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS` if configured.
+The voter side does not use Google login. Students and teachers vote using their 6-digit Voting ID.
 
 ## Firestore Setup
 
@@ -130,7 +118,7 @@ The app uses these assets on the welcome screen, voting screens, admin login, ad
 
 - Create Firebase project
 - Add Firebase web app config
-- Enable Firebase Auth for admin
+- Enable Firebase Google Sign-In for admin
 - Create Firestore collections:
   - `elections`
   - `candidates`
@@ -191,6 +179,6 @@ Test:
 
 ## Current Limitations
 
-- Staff login is a visual placeholder.
+- Admin login uses Firebase Google Sign-In and only allows `raj@vpps.co.in`.
 - Data is stored in localStorage only.
-- Firebase Auth, Firestore, and Hosting are prepared but not connected to live production data.
+- Firestore and Hosting are prepared but not connected to live production voting data.

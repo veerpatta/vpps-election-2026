@@ -14,7 +14,7 @@ const navItems = [
 
 export function AdminShell() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
 
   async function handleLogout() {
     await logout()
@@ -29,6 +29,9 @@ export function AdminShell() {
           <div>
             <p className="text-sm font-black text-vpps-gold">VPPS</p>
             <p className="text-xs text-white/70">Election Control Room</p>
+            <p className="mt-1 max-w-48 truncate text-[0.7rem] font-semibold text-white/60">
+              {user?.email}
+            </p>
           </div>
         </div>
         <nav className="mt-8 grid gap-2">
@@ -65,7 +68,7 @@ export function AdminShell() {
             <BrandLogo variant="icon" className="h-12 w-12" showFallbackText={false} />
             <div>
               <p className="text-sm font-black">Control Room</p>
-              <p className="text-xs text-slate-500">VPPS Election 2026</p>
+              <p className="max-w-44 truncate text-xs text-slate-500">{user?.email}</p>
             </div>
           </div>
           <button type="button" onClick={handleLogout} className="rounded-2xl px-3 py-2 text-sm font-black text-vpps-navy hover:bg-vpps-navy/5">
