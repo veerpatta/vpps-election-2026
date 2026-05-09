@@ -3,21 +3,34 @@ import { motion } from 'framer-motion'
 import { cn } from '../../lib/utils'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'quiet'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'quiet'
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export function Button({ className, variant = 'primary', ...props }: ButtonProps) {
-  const styles = {
-    primary: 'bg-vpps-gold text-vpps-navy shadow-lg shadow-vpps-gold/25 hover:bg-vpps-richGold',
-    secondary: 'border border-vpps-richGold/40 bg-white text-vpps-navy shadow-sm hover:border-vpps-richGold',
-    danger: 'bg-vpps-danger text-white shadow-lg shadow-red-600/20 hover:bg-red-700',
-    quiet: 'text-vpps-navy hover:bg-vpps-navy/5',
+export function Button({ className, variant = 'primary', size = 'md', ...props }: ButtonProps) {
+  const variants = {
+    primary:
+      'bg-vpps-navy text-white shadow-[0_8px_20px_-10px_rgba(11,31,58,0.55)] ring-1 ring-vpps-navy/30 hover:bg-vpps-navySoft active:translate-y-px',
+    secondary:
+      'bg-white text-vpps-navy ring-1 ring-vpps-line shadow-sm hover:ring-vpps-navy/30 hover:shadow active:translate-y-px',
+    ghost:
+      'bg-transparent text-vpps-navy hover:bg-vpps-navy/[0.04] active:translate-y-px',
+    danger:
+      'bg-vpps-danger text-white shadow-[0_8px_20px_-10px_rgba(220,38,38,0.55)] hover:bg-red-700 active:translate-y-px',
+    quiet:
+      'bg-vpps-soft text-vpps-navy ring-1 ring-vpps-line hover:bg-white active:translate-y-px',
+  }
+  const sizes = {
+    sm: 'h-9 px-3 text-xs',
+    md: 'h-11 px-5 text-sm',
+    lg: 'h-12 px-6 text-base',
   }
   return (
     <button
       className={cn(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50',
-        styles[variant],
+        'inline-flex select-none items-center justify-center gap-2 rounded-xl font-semibold tracking-tight transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40',
+        variants[variant],
+        sizes[size],
         className,
       )}
       {...props}
@@ -27,7 +40,13 @@ export function Button({ className, variant = 'primary', ...props }: ButtonProps
 
 export function Card({ children, className, ...props }: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
   return (
-    <div className={cn('rounded-[1.65rem] border border-white/80 bg-white/90 p-5 shadow-soft backdrop-blur', className)} {...props}>
+    <div
+      className={cn(
+        'rounded-2xl border border-vpps-line bg-white p-5 shadow-card',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </div>
   )
@@ -36,38 +55,50 @@ export function Card({ children, className, ...props }: PropsWithChildren<HTMLAt
 export function SchoolMark({ small = false }: { small?: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.45 }}
+      transition={{ duration: 0.4 }}
       className={cn(
-        'grid place-items-center rounded-full border border-vpps-gold/50 bg-vpps-navy text-center text-vpps-gold shadow-2xl shadow-vpps-navy/20',
+        'grid place-items-center rounded-full border border-vpps-gold/40 bg-vpps-navy text-center text-vpps-gold shadow-floating',
         small ? 'h-12 w-12 text-xs' : 'h-24 w-24 text-sm',
       )}
       aria-label="VPPS school emblem"
     >
-      <span className="font-black leading-none">VPPS</span>
+      <span className="font-bold leading-none">VPPS</span>
     </motion.div>
   )
 }
 
+type PillTone = 'navy' | 'green' | 'orange' | 'red' | 'gold' | 'slate'
+
 export function StatusPill({
   children,
   tone = 'navy',
-}: PropsWithChildren<{ tone?: 'navy' | 'green' | 'orange' | 'red' | 'gold' }>) {
-  const tones = {
-    navy: 'bg-vpps-navy/10 text-vpps-navy',
-    green: 'bg-vpps-success/10 text-green-700',
-    orange: 'bg-vpps-warning/10 text-orange-700',
-    red: 'bg-vpps-danger/10 text-red-700',
-    gold: 'bg-vpps-gold/20 text-amber-800',
+}: PropsWithChildren<{ tone?: PillTone }>) {
+  const tones: Record<PillTone, string> = {
+    navy: 'bg-vpps-navy/[0.06] text-vpps-navy ring-vpps-navy/15',
+    green: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+    orange: 'bg-orange-50 text-orange-800 ring-orange-200',
+    red: 'bg-red-50 text-red-700 ring-red-200',
+    gold: 'bg-amber-50 text-amber-800 ring-amber-200',
+    slate: 'bg-slate-100 text-slate-700 ring-slate-200',
   }
-  return <span className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-bold', tones[tone])}>{children}</span>
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ring-1 ring-inset',
+        tones[tone],
+      )}
+    >
+      {children}
+    </span>
+  )
 }
 
 export function Field({ label, children }: PropsWithChildren<{ label: string }>) {
   return (
-    <label className="grid gap-2 text-sm font-bold text-vpps-navy">
-      <span>{label}</span>
+    <label className="grid gap-1.5 text-sm font-medium text-vpps-navy">
+      <span className="text-xs font-semibold uppercase tracking-wide text-vpps-mute">{label}</span>
       {children}
     </label>
   )
@@ -76,11 +107,11 @@ export function Field({ label, children }: PropsWithChildren<{ label: string }>)
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
+      {...props}
       className={cn(
-        'min-h-12 rounded-2xl border border-vpps-navy/15 bg-white px-4 text-base text-vpps-navy shadow-inner shadow-vpps-navy/5 placeholder:text-slate-400',
+        'h-11 rounded-xl border border-vpps-line bg-white px-3.5 text-sm text-vpps-navy shadow-inset placeholder:text-slate-400 focus:border-vpps-navy/40',
         props.className,
       )}
-      {...props}
     />
   )
 }
@@ -88,23 +119,53 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
+      {...props}
       className={cn(
-        'min-h-12 rounded-2xl border border-vpps-navy/15 bg-white px-4 text-base text-vpps-navy shadow-inner shadow-vpps-navy/5',
+        'h-11 rounded-xl border border-vpps-line bg-white px-3.5 text-sm text-vpps-navy shadow-inset focus:border-vpps-navy/40',
         props.className,
       )}
-      {...props}
     />
   )
 }
 
 export function PageBackground({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#f7f8fb_0%,#ffffff_42%,#eef3f8_100%)] text-vpps-navy">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(244,180,0,0.16),transparent)]" />
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-[linear-gradient(270deg,rgba(11,31,58,0.08),transparent)]" />
-      </div>
+    <div className="relative min-h-screen bg-vpps-soft text-vpps-navy">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 bg-paper-grain bg-paper-grain opacity-60"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 top-0 h-[420px]"
+        style={{
+          background:
+            'radial-gradient(80% 60% at 50% 0%, rgba(244, 180, 0, 0.10) 0%, rgba(244, 180, 0, 0) 55%)',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 -bottom-32 h-[320px]"
+        style={{
+          background:
+            'radial-gradient(70% 50% at 50% 100%, rgba(11, 31, 58, 0.06) 0%, rgba(11, 31, 58, 0) 70%)',
+        }}
+      />
       <div className="relative">{children}</div>
     </div>
+  )
+}
+
+export function Eyebrow({ children, className }: PropsWithChildren<{ className?: string }>) {
+  return (
+    <p
+      className={cn(
+        'inline-flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-vpps-deepGold',
+        className,
+      )}
+    >
+      <span className="h-px w-5 bg-vpps-deepGold/60" />
+      {children}
+    </p>
   )
 }

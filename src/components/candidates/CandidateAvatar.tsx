@@ -3,27 +3,27 @@ import { getHouseMeta } from '../../lib/houses'
 import { assetPath, cn, initials } from '../../lib/utils'
 import type { HouseId } from '../../types/election'
 
-type AvatarShape = 'rounded' | 'portrait'
+type AvatarShape = 'circle' | 'rounded' | 'portrait'
 
 interface CandidateAvatarProps {
   name: string
   imageUrl?: string
   house?: HouseId
   category?: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'fill'
   shape?: AvatarShape
   selected?: boolean
   className?: string
 }
 
-const sizeClasses = {
-  sm: 'h-10 w-10 text-xs',
+const sizeClasses: Record<NonNullable<CandidateAvatarProps['size']>, string> = {
+  xs: 'h-9 w-9 text-[0.65rem]',
+  sm: 'h-12 w-12 text-xs',
   md: 'h-16 w-16 text-base',
-  lg: 'h-24 w-24 text-xl',
-  xl: 'h-full w-full text-3xl',
+  lg: 'h-20 w-20 text-lg',
+  xl: 'h-28 w-28 text-xl',
+  fill: 'h-full w-full text-2xl',
 }
-
-const portraitRatio = 'aspect-[4/5]'
 
 export function CandidateAvatar({
   name,
@@ -31,33 +31,39 @@ export function CandidateAvatar({
   house,
   category,
   size = 'md',
-  shape = 'rounded',
+  shape = 'circle',
   selected = false,
   className,
 }: CandidateAvatarProps) {
   const [failedImageUrl, setFailedImageUrl] = useState<string>()
+
   useEffect(() => {
     setFailedImageUrl(undefined)
   }, [imageUrl])
 
   const houseMeta = house ? getHouseMeta(house) : undefined
   const hasImage = Boolean(imageUrl && failedImageUrl !== imageUrl)
-  const accent = houseMeta?.primaryColor ?? '#0b1f3a'
+  const accent = houseMeta?.primaryColor ?? '#0B1F3A'
+
+  const shapeClasses =
+    shape === 'circle'
+      ? 'rounded-full'
+      : shape === 'portrait'
+      ? 'aspect-[4/5] rounded-2xl w-full'
+      : 'rounded-2xl'
 
   const isPortrait = shape === 'portrait'
-  const baseClasses = isPortrait
-    ? cn('relative w-full overflow-hidden rounded-2xl', portraitRatio)
-    : cn('relative inline-grid place-items-center overflow-hidden rounded-2xl', sizeClasses[size])
 
   const ringStyle = selected
-    ? `0 0 0 2px ${accent}, 0 14px 30px rgba(11, 31, 58, 0.18)`
+    ? `0 0 0 2px #ffffff, 0 0 0 4px ${accent}`
     : `0 0 0 1px rgba(11, 31, 58, 0.10)`
 
   return (
     <span
       className={cn(
-        'shrink-0 bg-white text-vpps-navy',
-        baseClasses,
+        'relative inline-grid shrink-0 place-items-center overflow-hidden bg-white text-vpps-navy',
+        shapeClasses,
+        !isPortrait ? sizeClasses[size] : '',
         className,
       )}
       style={{ boxShadow: ringStyle }}
@@ -77,19 +83,8 @@ export function CandidateAvatar({
           )}
         />
       ) : (
-        <PlaceholderArt
-          name={name}
-          accent={accent}
-          category={category}
-          isPortrait={isPortrait}
-        />
+        <PlaceholderArt name={name} accent={accent} category={category} isPortrait={isPortrait} />
       )}
-      {selected ? (
-        <span
-          className="pointer-events-none absolute inset-0 ring-2 ring-inset"
-          style={{ boxShadow: `inset 0 0 0 2px ${accent}` }}
-        />
-      ) : null}
     </span>
   )
 }
@@ -105,29 +100,23 @@ function PlaceholderArt({
   category?: string
   isPortrait: boolean
 }) {
-  const tone = category === 'Girl' ? '#fef3c7' : '#e6ecf5'
+  const tone = category === 'Girl' ? '#fde68a' : '#bfdbfe'
   return (
     <span
-      className={cn(
-        'flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-b from-white to-slate-50 text-vpps-navy',
-        isPortrait ? '' : 'p-1',
-      )}
-      style={{ backgroundImage: `linear-gradient(180deg, ${tone}, #ffffff 70%)` }}
+      className="flex h-full w-full items-center justify-center text-vpps-navy"
+      style={{
+        backgroundImage: `linear-gradient(135deg, ${tone}40 0%, #ffffff 60%, ${tone}30 100%)`,
+      }}
     >
       <span
         className={cn(
-          'grid place-items-center rounded-full font-black tracking-wide',
-          isPortrait ? 'h-20 w-20 text-2xl' : 'h-9 w-9 text-sm',
+          'grid place-items-center rounded-full font-bold tracking-tight',
+          isPortrait ? 'h-20 w-20 text-2xl' : 'h-[68%] w-[68%]',
         )}
-        style={{ backgroundColor: accent, color: '#f4b400' }}
+        style={{ backgroundColor: accent, color: '#F4B400' }}
       >
         {initials(name) || 'V'}
       </span>
-      {isPortrait ? (
-        <span className="mt-2 text-[0.65rem] font-black uppercase tracking-[0.2em] text-vpps-navy/70">
-          VPPS
-        </span>
-      ) : null}
     </span>
   )
 }

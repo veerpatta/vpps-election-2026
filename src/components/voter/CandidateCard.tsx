@@ -14,7 +14,7 @@ interface CandidateCardProps {
 export function CandidateCard({ candidate, selected, onSelect }: CandidateCardProps) {
   const houseMeta = candidate.house ? getHouseMeta(candidate.house) : undefined
   const isHouseCandidate = isHouseCaptainPostId(candidate.postId) && Boolean(houseMeta)
-  const accent = houseMeta?.primaryColor ?? '#0b1f3a'
+  const accent = houseMeta?.primaryColor ?? '#0B1F3A'
 
   return (
     <button
@@ -24,89 +24,73 @@ export function CandidateCard({ candidate, selected, onSelect }: CandidateCardPr
       aria-pressed={selected}
       aria-label={`Select ${candidate.name}`}
       className={cn(
-        'group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white text-left',
-        'transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-vpps-gold/70',
+        'group relative flex w-full items-center gap-3 rounded-2xl border bg-white px-3 py-2.5 text-left transition-all duration-200 sm:px-4 sm:py-3',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-vpps-gold/70',
         selected
-          ? 'shadow-[0_18px_36px_rgba(11,31,58,0.18)]'
-          : 'border-slate-200/80 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md',
+          ? 'border-transparent shadow-[0_12px_28px_-12px_rgba(11,31,58,0.35)]'
+          : 'border-vpps-line shadow-card hover:-translate-y-0.5 hover:border-vpps-navy/20 hover:shadow-soft',
       )}
-      style={{
-        borderColor: selected ? accent : undefined,
-        borderWidth: selected ? 2 : 1,
-      }}
+      style={selected ? { boxShadow: `0 0 0 2px ${accent}, 0 12px 28px -16px ${accent}80` } : undefined}
     >
-      <div className="relative bg-gradient-to-b from-slate-100 to-slate-50">
+      <div className="relative shrink-0">
         <CandidateAvatar
           name={candidate.name}
           imageUrl={candidate.photoUrl}
           house={candidate.house}
           category={candidate.category}
-          shape="portrait"
-          selected={selected}
-          className="!rounded-none !shadow-none"
+          shape="circle"
+          size="md"
         />
         {isHouseCandidate && houseMeta ? (
           <span
-            className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.14em] text-white shadow-sm"
+            className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full border-2 border-white text-[0.55rem] font-bold uppercase text-white"
             style={{ backgroundColor: accent }}
+            title={`${houseMeta.colorName} House`}
           >
-            {houseMeta.colorName}
+            {houseMeta.colorName.charAt(0)}
           </span>
         ) : null}
-        {selected ? (
-          <span
-            className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full text-white shadow-md"
-            style={{ backgroundColor: accent }}
-          >
-            <Check size={16} strokeWidth={3} />
-          </span>
-        ) : null}
-        <span className="pointer-events-none absolute inset-x-3 bottom-0 h-px bg-gradient-to-r from-transparent via-vpps-gold/60 to-transparent" />
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 px-3 py-3">
+      <div className="min-w-0 flex-1">
         <h3
-          className="min-h-[2.6rem] text-[0.95rem] font-black leading-snug text-vpps-navy [overflow-wrap:anywhere] [hyphens:auto]"
+          className="text-[0.95rem] font-semibold leading-snug tracking-tight text-vpps-navy [overflow-wrap:anywhere] sm:text-base"
         >
           {candidate.name}
         </h3>
-        <div className="flex flex-wrap items-center gap-1.5 text-[0.7rem] font-bold text-slate-600">
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.72rem] font-medium text-vpps-mute">
+          <span className="inline-flex items-center gap-1">
+            <span className="h-1 w-1 rounded-full bg-vpps-mute/50" />
             {candidate.classSection}
           </span>
-          {candidate.captainGender ? (
+          {isHouseCandidate && houseMeta ? (
             <span
-              className={cn(
-                'rounded-full px-2 py-0.5',
-                candidate.captainGender === 'girls'
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-vpps-navy/10 text-vpps-navy',
-              )}
+              className="inline-flex items-center gap-1 font-semibold"
+              style={{ color: accent }}
             >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
+              {houseMeta.colorName}
+            </span>
+          ) : null}
+          {candidate.captainGender ? (
+            <span className="inline-flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-vpps-mute/50" />
               {candidate.captainGender === 'girls' ? 'Girls' : 'Boys'}
             </span>
           ) : null}
         </div>
-        <div className="mt-auto pt-2">
-          <span
-            className={cn(
-              'flex w-full items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] transition',
-              selected
-                ? 'text-white'
-                : 'border border-vpps-navy/15 bg-white text-vpps-navy group-hover:border-vpps-navy/30',
-            )}
-            style={selected ? { backgroundColor: accent } : undefined}
-          >
-            {selected ? (
-              <>
-                <Check size={14} strokeWidth={3} /> Selected
-              </>
-            ) : (
-              'Select'
-            )}
-          </span>
-        </div>
       </div>
+
+      <span
+        aria-hidden="true"
+        className={cn(
+          'grid h-8 w-8 shrink-0 place-items-center rounded-full transition-all duration-200',
+          selected ? 'scale-100 text-white' : 'scale-95 border-2 border-vpps-line bg-white text-transparent group-hover:border-vpps-navy/30',
+        )}
+        style={selected ? { backgroundColor: accent } : undefined}
+      >
+        <Check size={18} strokeWidth={3} />
+      </span>
     </button>
   )
 }
