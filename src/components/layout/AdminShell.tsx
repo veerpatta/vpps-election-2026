@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ListChecks, Power, Trophy, Users, Vote } from 'lucide-react'
+import { LayoutDashboard, ListChecks, LogOut, Power, Trophy, Users, Vote } from 'lucide-react'
+import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/utils'
-import { SchoolMark } from '../ui/primitives'
+import { BrandLogo } from '../brand/BrandLogo'
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,11 +14,18 @@ const navItems = [
 
 export function AdminShell() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/admin', { replace: true })
+  }
+
   return (
     <div className="min-h-screen bg-vpps-soft text-vpps-navy">
       <aside className="no-print fixed left-0 top-0 z-20 hidden h-screen w-72 flex-col border-r border-white/70 bg-vpps-navy p-5 text-white shadow-2xl lg:flex">
         <div className="flex items-center gap-3">
-          <SchoolMark small />
+          <BrandLogo variant="icon" className="h-12 w-12" showFallbackText={false} />
           <div>
             <p className="text-sm font-black text-vpps-gold">VPPS</p>
             <p className="text-xs text-white/70">Election Control Room</p>
@@ -40,18 +48,29 @@ export function AdminShell() {
             )
           })}
         </nav>
-        <button type="button" onClick={() => navigate('/vote')} className="mt-auto flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-white/75 hover:bg-white/10 hover:text-white">
-          <Power size={18} />
-          Voting Screen
-        </button>
+        <div className="mt-auto grid gap-2">
+          <button type="button" onClick={() => navigate('/vote')} className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-white/75 hover:bg-white/10 hover:text-white">
+            <Power size={18} />
+            Voting Screen
+          </button>
+          <button type="button" onClick={handleLogout} className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-white/75 hover:bg-white/10 hover:text-white">
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
       </aside>
       <header className="no-print sticky top-0 z-10 border-b border-white/70 bg-white/90 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
-        <div className="flex items-center gap-3">
-          <SchoolMark small />
-          <div>
-            <p className="text-sm font-black">Control Room</p>
-            <p className="text-xs text-slate-500">VPPS Election 2026</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <BrandLogo variant="icon" className="h-12 w-12" showFallbackText={false} />
+            <div>
+              <p className="text-sm font-black">Control Room</p>
+              <p className="text-xs text-slate-500">VPPS Election 2026</p>
+            </div>
           </div>
+          <button type="button" onClick={handleLogout} className="rounded-2xl px-3 py-2 text-sm font-black text-vpps-navy hover:bg-vpps-navy/5">
+            Logout
+          </button>
         </div>
       </header>
       <main className="pb-24 lg:ml-72 lg:pb-0">

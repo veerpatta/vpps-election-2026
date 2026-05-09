@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "admin:create-user": "node scripts/create-admin-user.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
     "clsx": "^2.1.1",
     "firebase": "^12.13.0",
+    "firebase-admin": "^13.9.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "react": "^19.2.5",

@@ -6,12 +6,18 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+firebase-debug.log
 
 node_modules
 dist
 dist-ssr
 *.local
+.env
 .env.local
+.env.*.local
+.env.admin.local
+serviceAccountKey.json
+NUL
 
 # Editor directories and files
 .vscode/*

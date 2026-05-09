@@ -18,10 +18,20 @@ const hasFirebaseConfig = Boolean(
     firebaseConfig.appId,
 )
 
-export const firebaseApp = hasFirebaseConfig
+if (!hasFirebaseConfig) {
+  console.warn(
+    'Firebase config is missing. Add VITE_FIREBASE_* values to .env.local before using admin login.',
+  )
+}
+
+export const app = hasFirebaseConfig
   ? getApps()[0] ?? initializeApp(firebaseConfig)
   : null
 
-export const firebaseAuth = firebaseApp ? getAuth(firebaseApp) : null
-export const firestore = firebaseApp ? getFirestore(firebaseApp) : null
+export const auth = app ? getAuth(app) : null
+export const db = app ? getFirestore(app) : null
+
+export const firebaseApp = app
+export const firebaseAuth = auth
+export const firestore = db
 export const isFirebaseReady = hasFirebaseConfig

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Check, CheckCircle2, ShieldCheck, Vote } from 'lucide-react'
+import { BrandHeader } from '../../components/brand/BrandHeader'
+import { BrandLogo } from '../../components/brand/BrandLogo'
 import { CandidateCard } from '../../components/voter/CandidateCard'
-import { Button, Card, PageBackground, SchoolMark } from '../../components/ui/primitives'
+import { Button, Card, PageBackground } from '../../components/ui/primitives'
 import { requiredPosts } from '../../data/mockElectionData'
 import { getVotingCandidates, submitVote, validateVotingId } from '../../lib/electionStore'
 import type { CouncilPost } from '../../types/election'
@@ -82,7 +84,7 @@ export function VotePage() {
         <AnimatePresence mode="wait">
           {step === 'welcome' ? (
             <motion.section key="welcome" {...pageMotion} className="mx-auto grid w-full max-w-3xl place-items-center text-center">
-              <SchoolMark />
+              <BrandLogo variant="full" animated className="h-40 w-full max-w-sm sm:h-48 sm:max-w-md" />
               <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.45 }} className="mt-8 text-4xl font-black leading-tight text-vpps-navy sm:text-6xl">
                 VPPS Student Council Election 2026
               </motion.h1>
@@ -101,9 +103,9 @@ export function VotePage() {
 
           {step === 'id' ? (
             <motion.section key="id" {...pageMotion} className="mx-auto w-full max-w-xl">
+              <BrandLogo variant="icon" animated className="mx-auto mb-5 h-20 w-20" showFallbackText={false} />
               <Card className="p-6 sm:p-8">
                 <div className="flex items-center gap-4">
-                  <SchoolMark small />
                   <div>
                     <h1 className="text-3xl font-black">Enter Your 6-Digit Voting ID</h1>
                     <p className="mt-2 text-sm leading-6 text-slate-600">Enter the 6-digit number given by your class teacher or election desk.</p>
@@ -131,6 +133,7 @@ export function VotePage() {
 
           {step === 'select' ? (
             <motion.section key={`select-${currentPost}`} {...pageMotion} className="w-full">
+              <BrandHeader compact className="mb-6 rounded-3xl border border-white/80 bg-white/85 p-3 shadow-sm" />
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Step {postIndex + 1} of {requiredPosts.length}</p>
@@ -171,9 +174,10 @@ export function VotePage() {
           {step === 'review' ? (
             <motion.section key="review" {...pageMotion} className="mx-auto w-full max-w-3xl">
               <Card className="p-6 sm:p-8">
+                <BrandHeader compact className="mb-6 border-b border-dashed border-vpps-navy/15 pb-5" />
                 <h1 className="text-3xl font-black">Review Your Vote</h1>
                 <p className="mt-3 text-sm leading-6 text-slate-600">Please check your choices carefully. Once submitted, your vote cannot be changed.</p>
-                <div className="mt-6 overflow-hidden rounded-3xl border border-vpps-navy/10">
+                <div className="mt-6 overflow-hidden rounded-3xl border border-dashed border-vpps-navy/25 bg-vpps-soft/50">
                   {selectedRows.map((row) => (
                     <div key={row.post} className="grid grid-cols-[1fr_1.15fr] gap-3 border-b border-vpps-navy/10 bg-white px-4 py-4 last:border-b-0">
                       <p className="text-sm font-black text-vpps-navy">{row.post}</p>
@@ -192,9 +196,12 @@ export function VotePage() {
           {step === 'thanks' ? (
             <motion.section key="thanks" {...pageMotion} className="mx-auto w-full max-w-2xl text-center">
               <Card className="relative overflow-hidden p-8 sm:p-10">
-                <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 220, damping: 14 }} className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-vpps-success text-white">
-                  <CheckCircle2 size={52} />
-                </motion.div>
+                <div className="flex items-center justify-center gap-3">
+                  <BrandLogo variant="icon" animated className="h-20 w-20" showFallbackText={false} />
+                  <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 220, damping: 14 }} className="grid h-20 w-20 place-items-center rounded-full bg-vpps-success text-white">
+                    <CheckCircle2 size={44} />
+                  </motion.div>
+                </div>
                 <h1 className="mt-8 text-3xl font-black">Thank you! Your vote has been recorded.</h1>
                 <p className="mt-3 text-xl font-bold text-vpps-navy">आपका मतदान सफलतापूर्वक दर्ज हो गया है।</p>
                 <p className="mt-4 text-sm leading-6 text-slate-600">You cannot vote again using this ID.</p>

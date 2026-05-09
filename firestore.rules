@@ -2,6 +2,36 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedInAdmin() {
+      return request.auth != null;
+    }
+
+    // Admin screens require Firebase Authentication. At this stage every signed-in
+    // Firebase admin can manage election records; add adminUsers role checks before
+    // adding more staff accounts.
+    match /elections/{electionId} {
+      allow read, write: if signedInAdmin();
+    }
+
+    match /candidates/{candidateId} {
+      allow read, write: if signedInAdmin();
+    }
+
+    match /voters/{voterId} {
+      allow read, write: if signedInAdmin();
+    }
+
+    match /votes/{voteId} {
+      allow read, write: if signedInAdmin();
+    }
+
+    match /adminUsers/{adminUserId} {
+      allow read, write: if signedInAdmin();
+    }
+
+    // The voter flow still uses app-level 6-digit Voting ID logic in localStorage.
+    // Do not add public vote writes until final live voting rules are tested before
+    // election day.
     match /{document=**} {
       allow read, write: if false;
     }

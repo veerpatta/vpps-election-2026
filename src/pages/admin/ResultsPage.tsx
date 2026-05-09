@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Lock, Printer, Trophy } from 'lucide-react'
+import { BrandHeader } from '../../components/brand/BrandHeader'
+import { BrandLogo } from '../../components/brand/BrandLogo'
 import { Button, Card, StatusPill } from '../../components/ui/primitives'
 import { exportResultsCsv, getElection, getResults } from '../../lib/electionStore'
 import { formatStatus } from '../../lib/utils'
@@ -9,11 +11,13 @@ export function ResultsPage() {
   const [election] = useState(() => getElection())
   const results = useMemo(() => getResults(), [])
   const canShowResults = election.status === 'voting_closed' || election.status === 'results_published'
+  const resultDate = useMemo(() => new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }), [])
 
   return (
     <section className="px-4 py-6 sm:px-8 lg:px-10">
       <div className="no-print flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
+          <BrandHeader compact className="mb-6" />
           <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Results</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Election Results</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Candidate totals are shown only after voting is closed.</p>
@@ -32,6 +36,13 @@ export function ResultsPage() {
           <div className="no-print mb-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button type="button" variant="secondary" onClick={exportResultsCsv}><Trophy size={18} />Download Result</Button>
             <Button type="button" onClick={() => window.print()}><Printer size={18} />Print Result Sheet</Button>
+          </div>
+          <div className="mb-6 rounded-3xl border border-vpps-navy/10 bg-white p-5 text-center shadow-soft print:border-0 print:p-0 print:shadow-none">
+            <BrandLogo variant="full" className="mx-auto h-28 w-full max-w-sm print:h-24" />
+            <p className="mt-4 text-xl font-black text-vpps-navy">Veer Patta Senior Secondary School</p>
+            <p className="mt-1 text-sm font-bold text-slate-600">VPPS Student Council Election 2026</p>
+            <h2 className="mt-3 text-2xl font-black text-vpps-navy">Final Result Sheet</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-600">Date: {resultDate}</p>
           </div>
           <div className="grid gap-6">
             {results.map((result) => (
