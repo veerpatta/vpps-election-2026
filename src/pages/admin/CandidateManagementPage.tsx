@@ -3,6 +3,7 @@ import { CheckCircle2, ImagePlus, Pencil, Plus, Save, ShieldX, Trash2, Upload, U
 import { CandidateAvatar } from '../../components/candidates/CandidateAvatar'
 import { HouseBadge } from '../../components/house/HouseBadge'
 import { Button, Card, Eyebrow, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
+import { ClassSectionInput } from '../../components/ui/ClassSectionInput'
 import { SUPPORTED_POSTS, getElectionPost, getPostLabel } from '../../data/electionPosts'
 import { getCandidates, saveCandidate, toggleCandidate } from '../../lib/electionStore'
 import { compressImageFile } from '../../lib/imageUpload'
@@ -200,11 +201,10 @@ export function CandidateManagementPage() {
                   autoFocus
                 />
               </Field>
-              <Field label="Class & Section">
-                <TextInput
+              <Field label="Class">
+                <ClassSectionInput
                   value={form.classSection ?? ''}
-                  onChange={(event) => setForm({ ...form, classSection: event.target.value })}
-                  placeholder="e.g. 12 Arts"
+                  onChange={(next) => setForm({ ...form, classSection: next })}
                 />
               </Field>
               <Field label="Roll Number">

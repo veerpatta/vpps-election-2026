@@ -1,8 +1,21 @@
-import { useMemo, useRef, useState } from 'react'
-import { Download, FileSpreadsheet, Filter, Printer, RefreshCcw, RotateCcw, Search, Upload, UserPlus, X } from 'lucide-react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
+import {
+  Download,
+  FileSpreadsheet,
+  Pencil,
+  Printer,
+  RefreshCcw,
+  RotateCcw,
+  Upload,
+  UserPlus,
+  X,
+} from 'lucide-react'
 import { HouseBadge } from '../../components/house/HouseBadge'
 import { HouseLogo } from '../../components/house/HouseLogo'
-import { Button, Card, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
+import { VoterEditModal } from '../../components/admin/VoterEditModal'
+import { Button, Card, Eyebrow, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
+import { ClassSectionInput } from '../../components/ui/ClassSectionInput'
+import { cn } from '../../lib/utils'
 import {
   downloadVoterTemplateCsv,
   exportVotingIdListCsv,
@@ -17,13 +30,13 @@ import { houseOrder, houses, normalizeHouse } from '../../lib/houses'
 import { importRowsToVoters, previewVoterImport, type VoterImportPreview } from '../../lib/voterImport'
 import type { HouseId, Voter, VoterType } from '../../types/election'
 
-const blankVoter = {
+const blankVoter: Partial<Voter> = {
   voterName: '',
-  voterType: 'student' as VoterType,
+  voterType: 'student',
   classSection: '',
   rollNumber: '',
   departmentOrRole: '',
-  house: 'red' as HouseId,
+  house: 'red',
   votingId: '',
   hasVoted: false,
   active: true,
@@ -35,11 +48,13 @@ type HouseFilter = 'all' | HouseId
 export function VoterManagementPage() {
   const [voters, setVoters] = useState(() => getVoters())
   const [form, setForm] = useState<Partial<Voter>>(blankVoter)
+  const [addError, setAddError] = useState('')
   const [typeFilter, setTypeFilter] = useState<VoterTypeFilter>('all')
   const [houseFilter, setHouseFilter] = useState<HouseFilter>('all')
   const [search, setSearch] = useState('')
   const [preview, setPreview] = useState<VoterImportPreview | null>(null)
   const [importMessage, setImportMessage] = useState('')
+  const [editing, setEditing] = useState<Voter | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const filteredVoters = useMemo(() => {
@@ -67,23 +82,29 @@ export function VoterManagementPage() {
     setVoters(getVoters())
   }
 
-  function handleSave() {
-    if (!form.voterName || !form.voterType || !form.votingId || form.votingId.length !== 6) return
-    const house = form.voterType === 'student' ? normalizeHouse(form.house) : undefined
-    if (form.voterType === 'student' && (!house || house === 'all')) return
+  function handleAdd(event?: FormEvent) {
+    event?.preventDefault()
+    if (!form.voterName?.trim()) return setAddError('Please enter a voter name.')
+    if (!form.voterType) return setAddError('Please choose Student or Teacher.')
+    if (!form.votingId || form.votingId.length !== 6) return setAddError('Voting ID must be 6 digits.')
+
+    const house = normalizeHouse(form.house)
+    if (form.voterType === 'student' && (!house || house === 'all')) {
+      return setAddError('Students must have a specific house assigned.')
+    }
+
     saveVoter({
-      id: form.id,
-      voterName: form.voterName,
+      voterName: form.voterName.trim(),
       voterType: form.voterType,
-      classSection: form.classSection,
-      rollNumber: form.rollNumber,
-      departmentOrRole: form.departmentOrRole,
+      classSection: form.classSection?.trim() || undefined,
+      rollNumber: form.rollNumber?.trim() || undefined,
+      departmentOrRole: form.departmentOrRole?.trim() || undefined,
       house,
       votingId: form.votingId,
-      hasVoted: form.hasVoted ?? false,
-      votedAt: form.votedAt,
-      active: form.active ?? true,
+      hasVoted: false,
+      active: true,
     })
+    setAddError('')
     setForm(blankVoter)
     refresh()
   }
@@ -100,66 +121,154 @@ export function VoterManagementPage() {
     const validVoters = importRowsToVoters(preview.rows)
     importVoters(validVoters)
     setPreview(null)
-    setImportMessage(`${validVoters.length} voter${validVoters.length === 1 ? '' : 's'} imported with generated Voting IDs.`)
+    setImportMessage(
+      `${validVoters.length} voter${validVoters.length === 1 ? '' : 's'} imported with generated Voting IDs.`,
+    )
     refresh()
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   return (
-    <section className="px-4 py-5 sm:px-8 lg:px-10">
+    <section className="px-4 py-6 sm:px-8 lg:px-10">
       <div className="no-print">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-vpps-richGold">Voter List</p>
-        <h1 className="mt-2 text-3xl font-black sm:text-4xl">Voter Management</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Students and teachers use the same simple 6-digit Voting ID. Student house is stored here and never selected on the voting screen.</p>
+        <Eyebrow>Voter List</Eyebrow>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-vpps-navy sm:text-4xl">
+          Voter Management
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-vpps-mute">
+          Students and teachers use the same simple 6-digit Voting ID. Click any voter to edit details directly.
+        </p>
       </div>
 
-      <Card className="no-print mt-5">
-        <div className="grid gap-4 lg:grid-cols-7">
-          <Field label="Voter Name"><TextInput value={form.voterName ?? ''} onChange={(event) => setForm({ ...form, voterName: event.target.value })} /></Field>
-          <Field label="Voter Type">
-            <Select
-              value={form.voterType}
-              onChange={(event) => setForm({ ...form, voterType: event.target.value as VoterType, house: event.target.value === 'student' ? form.house ?? 'red' : undefined })}
-            >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-            </Select>
-          </Field>
-          <Field label="Class & Section"><TextInput value={form.classSection ?? ''} onChange={(event) => setForm({ ...form, classSection: event.target.value })} /></Field>
-          <Field label="Roll / Admission No."><TextInput value={form.rollNumber ?? ''} onChange={(event) => setForm({ ...form, rollNumber: event.target.value })} /></Field>
-          <Field label="House">
-            <Select
-              value={form.house ?? ''}
-              disabled={form.voterType === 'teacher'}
-              onChange={(event) => setForm({ ...form, house: event.target.value as HouseId })}
-            >
-              {houseOrder.map((house) => <option key={house} value={house}>{houses[house].colorName} - {houses[house].name}</option>)}
-            </Select>
-          </Field>
-          <Field label="6-Digit Voting ID">
-            <TextInput inputMode="numeric" maxLength={6} value={form.votingId ?? ''} onChange={(event) => setForm({ ...form, votingId: event.target.value.replace(/\D/g, '').slice(0, 6) })} />
-          </Field>
-          <div className="flex items-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setForm({ ...form, votingId: generateVotingId() })} aria-label="Generate random 6-digit Voting ID"><RefreshCcw size={18} /></Button>
-            <Button type="button" onClick={handleSave} className="flex-1"><UserPlus size={18} />{form.id ? 'Save' : 'Add'}</Button>
+      <form onSubmit={handleAdd} className="no-print">
+        <Card className="mt-6 overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-vpps-line px-5 py-3">
+            <div className="flex items-center gap-2">
+              <UserPlus size={16} className="text-vpps-deepGold" />
+              <p className="text-sm font-semibold tracking-tight text-vpps-navy">Add new voter</p>
+            </div>
           </div>
-        </div>
-        <div className="mt-4">
-          <Field label="Department / Role for teachers"><TextInput value={form.departmentOrRole ?? ''} onChange={(event) => setForm({ ...form, departmentOrRole: event.target.value })} /></Field>
-        </div>
-      </Card>
+          <div className="grid gap-4 p-5 lg:grid-cols-2">
+            <Field label="Voter Name">
+              <TextInput
+                value={form.voterName ?? ''}
+                onChange={(event) => setForm({ ...form, voterName: event.target.value })}
+                placeholder="Full name"
+              />
+            </Field>
+            <Field label="Voter Type">
+              <Select
+                value={form.voterType}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    voterType: event.target.value as VoterType,
+                    house: event.target.value === 'student' ? form.house ?? 'red' : form.house,
+                  })
+                }
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+              </Select>
+            </Field>
+            <Field label="Class">
+              <ClassSectionInput
+                value={form.classSection ?? ''}
+                onChange={(next) => setForm({ ...form, classSection: next })}
+              />
+            </Field>
+            <Field label="Roll / Admission No.">
+              <TextInput
+                value={form.rollNumber ?? ''}
+                onChange={(event) => setForm({ ...form, rollNumber: event.target.value })}
+                placeholder="Optional"
+              />
+            </Field>
+            <Field label="House">
+              <Select
+                value={form.house as string}
+                onChange={(event) => setForm({ ...form, house: event.target.value as HouseId | 'all' })}
+              >
+                {form.voterType === 'teacher' ? <option value="all">All Houses (Teacher)</option> : null}
+                {houseOrder.map((house) => (
+                  <option key={house} value={house}>
+                    {houses[house].colorName} — {houses[house].name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="6-Digit Voting ID">
+              <div className="flex gap-2">
+                <TextInput
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={form.votingId ?? ''}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      votingId: event.target.value.replace(/\D/g, '').slice(0, 6),
+                    })
+                  }
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setForm({ ...form, votingId: generateVotingId() })}
+                  title="Generate a fresh Voting ID"
+                >
+                  <RefreshCcw size={14} />
+                </Button>
+              </div>
+            </Field>
+            {form.voterType === 'teacher' ? (
+              <Field label="Department / Role">
+                <TextInput
+                  value={form.departmentOrRole ?? ''}
+                  onChange={(event) => setForm({ ...form, departmentOrRole: event.target.value })}
+                  placeholder="e.g. Mathematics, Office Staff"
+                />
+              </Field>
+            ) : null}
+            <div className="flex items-end">
+              <Button type="submit" className="w-full">
+                <UserPlus size={16} />
+                Add Voter
+              </Button>
+            </div>
+          </div>
+          {addError ? (
+            <div className="mx-5 mb-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 ring-1 ring-red-100">
+              {addError}
+            </div>
+          ) : null}
+        </Card>
+      </form>
 
       <Card className="no-print mt-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h2 className="text-xl font-black text-vpps-navy">Bulk Voter Import</h2>
-            <p className="mt-2 text-sm font-semibold text-slate-600">Upload Excel/CSV, preview validation, then import only after review.</p>
+            <p className="text-sm font-semibold tracking-tight text-vpps-navy">Bulk voter import</p>
+            <p className="mt-1 text-xs font-medium text-vpps-mute">Upload Excel/CSV, preview validation, then import only after review.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" onClick={downloadVoterTemplateCsv}><Download size={18} />Download Template</Button>
-            <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}><Upload size={18} />Upload Excel</Button>
-            <Button type="button" variant="secondary" onClick={() => exportVotingIdListCsv(filteredVoters)}><FileSpreadsheet size={18} />Export Voting ID List</Button>
-            <Button type="button" onClick={() => window.print()}><Printer size={18} />Print List</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={downloadVoterTemplateCsv}>
+              <Download size={14} />
+              Template
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
+              <Upload size={14} />
+              Upload Excel
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => exportVotingIdListCsv(filteredVoters)}>
+              <FileSpreadsheet size={14} />
+              Export Voting IDs
+            </Button>
+            <Button type="button" size="sm" onClick={() => window.print()}>
+              <Printer size={14} />
+              Print
+            </Button>
           </div>
           <input
             ref={fileInputRef}
@@ -169,44 +278,63 @@ export function VoterManagementPage() {
             onChange={(event) => void handleFile(event.target.files?.[0])}
           />
         </div>
-        {importMessage ? <p className="mt-4 rounded-2xl bg-vpps-success/10 px-4 py-3 text-sm font-bold text-green-700">{importMessage}</p> : null}
+        {importMessage ? (
+          <p className="mt-4 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
+            {importMessage}
+          </p>
+        ) : null}
         {preview ? (
-          <div className="mt-5 rounded-3xl border border-vpps-navy/10 bg-vpps-soft/60 p-4">
-            <div className="grid gap-3 sm:grid-cols-4">
+          <div className="mt-5 rounded-2xl border border-vpps-line bg-vpps-soft/40 p-4">
+            <div className="grid gap-2 sm:grid-cols-4">
               <StatusPill tone="navy">Total rows: {preview.totalRows}</StatusPill>
               <StatusPill tone="green">Valid: {preview.validRows}</StatusPill>
               <StatusPill tone="red">Errors: {preview.errorRows}</StatusPill>
               <StatusPill tone="orange">Warnings: {preview.warningRows}</StatusPill>
             </div>
-            <div className="mt-4 max-h-[28rem] overflow-auto rounded-2xl border border-white bg-white">
-              <div className="grid min-w-[58rem] grid-cols-[1.2fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 border-b bg-vpps-navy px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-white">
+            <div className="mt-4 max-h-[24rem] overflow-auto rounded-xl border border-vpps-line bg-white">
+              <div className="grid min-w-[58rem] grid-cols-[1.2fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 border-b border-vpps-line bg-vpps-navy px-4 py-2.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white">
                 <span>Name</span><span>Type</span><span>Class</span><span>Roll No</span><span>House</span><span>Voting ID</span><span>Status</span>
               </div>
               {preview.rows.map((row) => (
-                <div key={row.rowNumber} className="grid min-w-[58rem] grid-cols-[1.2fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 border-b px-4 py-2.5 text-sm last:border-b-0">
-                  <span className="font-bold">{row.voterName || '-'}</span>
+                <div
+                  key={row.rowNumber}
+                  className="grid min-w-[58rem] grid-cols-[1.2fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 border-b border-vpps-line/60 px-4 py-2 text-sm last:border-b-0"
+                >
+                  <span className="font-semibold">{row.voterName || '-'}</span>
                   <span className="capitalize">{row.voterType ?? '-'}</span>
                   <span>{row.classSection || '-'}</span>
                   <span>{row.rollNumber || '-'}</span>
                   <span>{row.house && row.house !== 'all' ? <HouseBadge house={row.house} size="sm" showHero={false} /> : '-'}</span>
-                  <span className="font-black tracking-[0.16em]">{row.votingId ?? '-'}</span>
-                  <span className="text-xs font-bold">
-                    {row.errors.length ? <span className="text-red-700">{row.errors.join('; ')}</span> : <span className="text-green-700">Valid</span>}
-                    {row.warnings.length ? <span className="block text-orange-700">{row.warnings.join('; ')}</span> : null}
+                  <span className="font-mono text-sm tracking-[0.16em]">{row.votingId ?? '-'}</span>
+                  <span className="text-xs">
+                    {row.errors.length ? (
+                      <span className="font-medium text-red-700">{row.errors.join('; ')}</span>
+                    ) : (
+                      <span className="font-medium text-emerald-700">Valid</span>
+                    )}
+                    {row.warnings.length ? (
+                      <span className="block text-orange-700">{row.warnings.join('; ')}</span>
+                    ) : null}
                   </span>
                 </div>
               ))}
             </div>
             <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => setPreview(null)}><X size={18} />Cancel</Button>
-              <Button type="button" disabled={preview.validRows === 0} onClick={handleImportValidVoters}><Upload size={18} />Import Valid Voters</Button>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setPreview(null)}>
+                <X size={14} />
+                Cancel
+              </Button>
+              <Button type="button" size="sm" disabled={preview.validRows === 0} onClick={handleImportValidVoters}>
+                <Upload size={14} />
+                Import valid voters
+              </Button>
             </div>
           </div>
         ) : null}
       </Card>
 
       <Card className="no-print mt-6">
-        <div className="grid gap-4 lg:grid-cols-[0.8fr_1.4fr_1fr_1.4fr] lg:items-end">
+        <div className="grid gap-4 lg:grid-cols-[0.7fr_1.6fr_1fr_auto] lg:items-end">
           <Field label="Voter Type">
             <Select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as VoterTypeFilter)}>
               <option value="all">All</option>
@@ -214,28 +342,36 @@ export function VoterManagementPage() {
               <option value="teacher">Teachers</option>
             </Select>
           </Field>
-          <div className="grid gap-2 text-sm font-bold text-vpps-navy">
-            <span>House</span>
+          <div className="grid gap-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-vpps-mute">House</span>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setHouseFilter('all')}
-                className={`inline-flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-sm font-black transition ${houseFilter === 'all' ? 'border-vpps-richGold bg-vpps-gold/20 text-vpps-navy' : 'border-vpps-navy/10 bg-white text-slate-600'}`}
+                className={cn(
+                  'inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition',
+                  houseFilter === 'all'
+                    ? 'border-vpps-navy bg-vpps-navy text-white'
+                    : 'border-vpps-line bg-white text-vpps-navy hover:border-vpps-navy/40',
+                )}
               >
                 All
               </button>
               {houseOrder.map((house) => {
                 const meta = houses[house]
+                const active = houseFilter === house
                 return (
                   <button
                     key={house}
                     type="button"
                     onClick={() => setHouseFilter(house)}
-                    className="inline-flex min-h-12 items-center gap-2 rounded-2xl border bg-white px-3 text-sm font-black transition"
+                    className={cn(
+                      'inline-flex h-10 items-center gap-1.5 rounded-xl border bg-white px-3 text-xs font-semibold transition',
+                      active ? 'shadow-card' : 'hover:border-vpps-navy/30',
+                    )}
                     style={{
-                      borderColor: houseFilter === house ? meta.primaryColor : meta.borderColor,
-                      color: houseFilter === house ? meta.primaryColor : '#475569',
-                      boxShadow: houseFilter === house ? `0 10px 25px ${meta.accentColor}26` : undefined,
+                      borderColor: active ? meta.primaryColor : '#E5E9F2',
+                      color: active ? meta.primaryColor : '#0B1F3A',
                     }}
                   >
                     <HouseLogo house={house} size="sm" />
@@ -246,39 +382,97 @@ export function VoterManagementPage() {
             </div>
           </div>
           <Field label="Search">
-            <TextInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, class, roll, Voting ID" />
+            <TextInput
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Name, class, roll, Voting ID"
+            />
           </Field>
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-            <Filter size={18} />
-            Showing {filteredVoters.length} of {voters.length}
-            <Search size={18} className="ml-auto text-slate-400" />
-          </div>
+          <p className="text-xs font-medium text-vpps-mute lg:text-right">
+            Showing <span className="font-semibold text-vpps-navy">{filteredVoters.length}</span> of {voters.length}
+          </p>
         </div>
       </Card>
 
-      <div className="print-area mt-6 overflow-hidden rounded-[1.65rem] bg-white shadow-soft print:shadow-none">
-        <div className="hidden grid-cols-[1.1fr_0.6fr_0.8fr_1fr_0.8fr_0.8fr_0.9fr] gap-3 border-b border-slate-100 px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-slate-500 lg:grid">
+      <div className="print-area mt-6 overflow-hidden rounded-2xl border border-vpps-line bg-white shadow-card print:shadow-none">
+        <div className="hidden grid-cols-[1.2fr_0.5fr_0.9fr_0.9fr_0.7fr_0.9fr_auto] gap-3 border-b border-vpps-line bg-vpps-soft/60 px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-vpps-mute lg:grid">
           <span>Name</span><span>Type</span><span>Class / Role</span><span>House</span><span>Voting ID</span><span>Status</span><span className="no-print">Actions</span>
         </div>
         {filteredVoters.map((voter) => (
-          <div key={voter.id} className="grid gap-3 border-b border-slate-100 px-5 py-3 last:border-b-0 lg:grid-cols-[1.1fr_0.6fr_0.8fr_1fr_0.8fr_0.8fr_0.9fr] lg:items-center">
-            <div><p className="font-black">{voter.voterName}</p><p className="text-xs font-semibold text-slate-500">{voter.rollNumber}</p></div>
-            <p className="text-sm font-bold capitalize">{voter.voterType}</p>
-            <p className="text-sm text-slate-600">{voter.classSection || voter.departmentOrRole || '-'}</p>
-            <div>{voter.house && voter.house !== 'all' ? <HouseBadge house={voter.house} size="sm" /> : <HouseBadge house="all" size="sm" />}</div>
-            <p className="text-lg font-black tracking-[0.18em]">{voter.votingId}</p>
-            <div className="flex flex-wrap gap-2">
-              <StatusPill tone={voter.hasVoted ? 'green' : 'orange'}>{voter.hasVoted ? 'Voted' : 'Not Voted'}</StatusPill>
-              <StatusPill tone={voter.active ? 'navy' : 'red'}>{voter.active ? 'Active' : 'Inactive'}</StatusPill>
+          <div
+            key={voter.id}
+            className="group grid gap-3 border-b border-vpps-line/70 px-5 py-3 last:border-b-0 lg:grid-cols-[1.2fr_0.5fr_0.9fr_0.9fr_0.7fr_0.9fr_auto] lg:items-center"
+          >
+            <div>
+              <p className="text-sm font-semibold tracking-tight text-vpps-navy">{voter.voterName}</p>
+              {voter.rollNumber ? (
+                <p className="text-[0.7rem] font-medium text-vpps-mute">Roll {voter.rollNumber}</p>
+              ) : null}
             </div>
-            <div className="no-print flex flex-wrap gap-2">
-              <Button type="button" variant="secondary" onClick={() => setForm(voter)}>Edit</Button>
-              <Button type="button" variant="secondary" onClick={() => { toggleVoterActive(voter.id); refresh() }}>{voter.active ? 'Inactive' : 'Active'}</Button>
-              <Button type="button" variant="secondary" onClick={() => { resetVoterForDemo(voter.id); refresh() }}><RotateCcw size={16} />Reset</Button>
+            <p className="text-sm font-medium capitalize text-vpps-navy/80">{voter.voterType}</p>
+            <p className="text-sm text-vpps-navy/70">{voter.classSection || voter.departmentOrRole || '—'}</p>
+            <div>
+              {voter.house && voter.house !== 'all' ? (
+                <HouseBadge house={voter.house} size="sm" />
+              ) : (
+                <HouseBadge house="all" size="sm" />
+              )}
+            </div>
+            <p className="font-mono text-base font-semibold tracking-[0.18em] text-vpps-navy">{voter.votingId}</p>
+            <div className="flex flex-wrap gap-1">
+              <StatusPill tone={voter.hasVoted ? 'green' : 'orange'}>
+                {voter.hasVoted ? 'Voted' : 'Not voted'}
+              </StatusPill>
+              <StatusPill tone={voter.active ? 'navy' : 'red'}>
+                {voter.active ? 'Active' : 'Inactive'}
+              </StatusPill>
+            </div>
+            <div className="no-print flex flex-wrap justify-end gap-1">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(voter)}>
+                <Pencil size={14} />
+                Edit
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  toggleVoterActive(voter.id)
+                  refresh()
+                }}
+              >
+                {voter.active ? 'Inactive' : 'Active'}
+              </Button>
+              {voter.hasVoted ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    resetVoterForDemo(voter.id)
+                    refresh()
+                  }}
+                  title="Reset voted status"
+                >
+                  <RotateCcw size={14} />
+                </Button>
+              ) : null}
             </div>
           </div>
         ))}
+        {filteredVoters.length === 0 ? (
+          <p className="px-5 py-6 text-center text-sm font-medium text-vpps-mute">
+            No voters match the current filter.
+          </p>
+        ) : null}
       </div>
+
+      <VoterEditModal
+        open={Boolean(editing)}
+        voter={editing}
+        onClose={() => setEditing(null)}
+        onSaved={refresh}
+      />
     </section>
   )
 }
