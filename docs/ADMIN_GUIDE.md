@@ -70,11 +70,18 @@ Use results only after voting is closed.
 ## ✅ Admin Can
 
 - Open or close voting.
-- View voter list.
-- View candidate list.
+- View, edit, deactivate, or delete voters.
+- View, edit, deactivate, or delete candidates.
 - Monitor turnout.
 - View results after closing voting.
 - Export or print results.
+
+## 🗑️ Delete vs Inactive
+
+| Action | When to Use |
+| --- | --- |
+| Mark inactive | Use when a voter or candidate should be blocked but kept in the records for review. |
+| Delete | Use only for wrong or duplicate records. Delete is permanent. |
 
 ## 🚫 Admin Should Not Reset
 

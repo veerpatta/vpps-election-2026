@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { RefreshCcw, RotateCcw, Save, ShieldOff, ShieldCheck } from 'lucide-react'
+import { RefreshCcw, RotateCcw, Save, ShieldOff, ShieldCheck, Trash2 } from 'lucide-react'
 import { Button, Field, Select, StatusPill, TextInput } from '../ui/primitives'
 import { ClassSectionInput } from '../ui/ClassSectionInput'
 import { Modal } from '../ui/Modal'
 import { houseOrder, houses, normalizeHouse } from '../../lib/houses'
-import { generateVotingId, resetVoterForDemo, saveVoter, toggleVoterActive } from '../../services/electionService'
+import { deleteVoter, generateVotingId, resetVoterForDemo, saveVoter, toggleVoterActive } from '../../services/electionService'
 import type { HouseId, Voter, VoterType } from '../../types/election'
 
 interface VoterEditModalProps {
@@ -12,9 +12,10 @@ interface VoterEditModalProps {
   voter: Voter | null
   onClose: () => void
   onSaved: () => void
+  onDeleted?: () => void
 }
 
-export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModalProps) {
+export function VoterEditModal({ open, voter, onClose, onSaved, onDeleted }: VoterEditModalProps) {
   const [form, setForm] = useState<Partial<Voter>>(voter ?? {})
   const [error, setError] = useState('')
 
@@ -54,6 +55,17 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
     onClose()
   }
 
+  async function handleDelete(selectedVoter: Voter) {
+    const confirmed = window.confirm(
+      `Delete ${selectedVoter.voterName} permanently?\n\nUse this only for wrong or duplicate voter records. This cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    await deleteVoter(selectedVoter.id)
+    onDeleted?.()
+    onClose()
+  }
+
   return (
     <Modal
       open={open}
@@ -63,6 +75,10 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
       size="md"
       footer={
         <>
+          <Button type="button" variant="danger" onClick={() => void handleDelete(voter)} className="mr-auto">
+            <Trash2 size={16} />
+            Delete voter
+          </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>

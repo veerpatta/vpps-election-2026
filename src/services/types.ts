@@ -37,6 +37,7 @@ export interface ElectionService {
   getBallotPosts: (voter: Voter) => ElectionPost[]
   saveCandidate: (candidate: Partial<Candidate> & Pick<Candidate, 'name' | 'classSection' | 'postId'>) => Promise<Candidate>
   toggleCandidate: (candidateId: string, key: 'approved' | 'active') => Promise<void>
+  deleteCandidate: (candidateId: string) => Promise<void>
   getVoters: () => Promise<Voter[]>
   getVoterByVotingId: (votingId: string) => Promise<Voter | null>
   saveVoter: (voter: Partial<Voter> & Pick<Voter, 'voterName' | 'voterType' | 'votingId'>) => Promise<Voter>
@@ -48,6 +49,7 @@ export interface ElectionService {
   getResults: () => Promise<PostResult[]>
   getHouseStats: () => Promise<HouseStats[]>
   toggleVoterActive: (voterId: string) => Promise<void>
+  deleteVoter: (voterId: string) => Promise<void>
   resetVoterForDemo: (voterId: string) => Promise<void>
   validateVotingId: (votingId: string) => Promise<VotingIdValidationResult>
   submitVote: (votingId: string, selectedCandidateIds: Partial<Record<ElectionPostId, string>>) => Promise<void>

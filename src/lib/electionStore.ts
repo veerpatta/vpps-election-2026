@@ -255,6 +255,12 @@ export function toggleCandidate(candidateId: string, key: 'approved' | 'active')
   writeStore(store)
 }
 
+export function deleteCandidate(candidateId: string) {
+  const store = readStore()
+  store.candidates = store.candidates.filter((candidate) => candidate.id !== candidateId)
+  writeStore(store)
+}
+
 export function getVoters() {
   return readStore().voters
 }
@@ -408,6 +414,12 @@ export function toggleVoterActive(voterId: string) {
   store.voters = store.voters.map((voter) =>
     voter.id === voterId ? { ...voter, active: !voter.active } : voter,
   )
+  writeStore(store)
+}
+
+export function deleteVoter(voterId: string) {
+  const store = readStore()
+  store.voters = store.voters.filter((voter) => voter.id !== voterId)
   writeStore(store)
 }
 

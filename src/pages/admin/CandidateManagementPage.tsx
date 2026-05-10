@@ -5,7 +5,7 @@ import { HouseBadge } from '../../components/house/HouseBadge'
 import { Button, Card, Eyebrow, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
 import { ClassSectionInput } from '../../components/ui/ClassSectionInput'
 import { SUPPORTED_POSTS, getElectionPost, getPostLabel } from '../../data/electionPosts'
-import { getCandidates, saveCandidate, toggleCandidate } from '../../services/electionService'
+import { deleteCandidate, getCandidates, saveCandidate, toggleCandidate } from '../../services/electionService'
 import { compressImageFile } from '../../lib/imageUpload'
 import { houses } from '../../lib/houses'
 import { cn } from '../../lib/utils'
@@ -112,6 +112,22 @@ export function CandidateManagementPage() {
       await refresh()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not process this image.')
+    }
+  }
+
+  async function handleDeleteCandidate(candidate: Candidate) {
+    const confirmed = window.confirm(
+      `Delete ${candidate.name} permanently?\n\nUse this only for wrong or duplicate candidate records. This cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    try {
+      await deleteCandidate(candidate.id)
+      if (form.id === candidate.id) resetForm()
+      await refresh()
+      setMessage('')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not delete this candidate.')
     }
   }
 
@@ -406,6 +422,16 @@ export function CandidateManagementPage() {
                 >
                   <UserRoundX size={14} />
                   {candidate.active ? 'Deactivate' : 'Activate'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => void handleDeleteCandidate(candidate)}
+                  title="Delete candidate permanently"
+                >
+                  <Trash2 size={14} />
+                  Delete
                 </Button>
               </div>
             </Card>

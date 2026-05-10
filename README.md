@@ -126,13 +126,14 @@ The Admin Control Room is for the approved school admin account only. Admin logi
 Admin can:
 
 - Open and close voting.
-- View voters.
-- View candidates.
+- View, edit, deactivate, or delete voters.
+- View, edit, deactivate, or delete candidates.
 - Monitor turnout.
 - View results after voting is closed.
 - Export or print results.
 
 Admin should not share access with students or unapproved users.
+Use **Deactivate** when a record should be blocked but kept for review. Use **Delete** only for wrong or duplicate records because deletion is permanent.
 
 ## 🚦 Election Day SOP
 

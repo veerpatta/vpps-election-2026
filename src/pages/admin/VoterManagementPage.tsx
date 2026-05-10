@@ -6,6 +6,7 @@ import {
   Printer,
   RefreshCcw,
   RotateCcw,
+  Trash2,
   Upload,
   UserPlus,
   X,
@@ -17,6 +18,7 @@ import { Button, Card, Eyebrow, Field, Select, StatusPill, TextInput } from '../
 import { ClassSectionInput } from '../../components/ui/ClassSectionInput'
 import { cn } from '../../lib/utils'
 import {
+  deleteVoter,
   downloadVoterTemplateCsv,
   exportVotingIdListCsv,
   generateVotingId,
@@ -149,6 +151,21 @@ export function VoterManagementPage() {
     )
     await refresh()
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function handleDeleteVoter(voter: Voter) {
+    const confirmed = window.confirm(
+      `Delete ${voter.voterName} permanently?\n\nUse this only for wrong or duplicate voter records. This cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    try {
+      await deleteVoter(voter.id)
+      if (editing?.id === voter.id) setEditing(null)
+      await refresh()
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Could not delete this voter.')
+    }
   }
 
   return (
@@ -487,6 +504,16 @@ export function VoterManagementPage() {
                   <RotateCcw size={14} />
                 </Button>
               ) : null}
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={() => void handleDeleteVoter(voter)}
+                title="Delete voter permanently"
+              >
+                <Trash2 size={14} />
+                Delete
+              </Button>
             </div>
           </div>
         ))}
@@ -502,6 +529,7 @@ export function VoterManagementPage() {
         voter={editing}
         onClose={() => setEditing(null)}
         onSaved={refresh}
+        onDeleted={refresh}
       />
     </section>
   )

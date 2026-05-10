@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -402,10 +403,18 @@ async function toggleCandidate(candidateId: string, key: 'approved' | 'active') 
   await withFirestoreTimeout(updateDoc(candidateRef(candidateId), { [key]: !snapshot.data()[key] }))
 }
 
+async function deleteCandidate(candidateId: string) {
+  await withFirestoreTimeout(deleteDoc(candidateRef(candidateId)))
+}
+
 async function toggleVoterActive(voterId: string) {
   const snapshot = await withFirestoreTimeout(getDoc(voterRef(voterId)))
   if (!snapshot.exists()) return
   await withFirestoreTimeout(updateDoc(voterRef(voterId), { active: !snapshot.data().active }))
+}
+
+async function deleteVoter(voterId: string) {
+  await withFirestoreTimeout(deleteDoc(voterRef(voterId)))
 }
 
 async function resetVoterForDemo(voterId: string) {
@@ -540,6 +549,7 @@ export const firestoreElectionService: ElectionService = {
   getBallotPosts: getPostsForVoter,
   saveCandidate,
   toggleCandidate,
+  deleteCandidate,
   getVoters,
   getVoterByVotingId,
   saveVoter,
@@ -551,6 +561,7 @@ export const firestoreElectionService: ElectionService = {
   getResults,
   getHouseStats,
   toggleVoterActive,
+  deleteVoter,
   resetVoterForDemo,
   validateVotingId,
   submitVote,
