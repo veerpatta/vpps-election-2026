@@ -1,10 +1,24 @@
-Place optional local house hero images in this folder:
+# 🏠 VPPS House Images
 
-- `rana-pratap.png`
-- `rana-kumbha.png`
-- `bappa-rawal.png`
-- `rana-sanga.png`
+This folder stores the approved house images used by the election app.
 
-Use only school-approved images or public-domain images with permission suitable for school election use.
+## Houses
 
-If an image is missing, the app shows an elegant shield-style fallback and continues working.
+| Colour | House |
+| --- | --- |
+| Red | Rana Pratap House |
+| Blue | Rana Kumbha House |
+| Green | Bappa Rawal House |
+| Yellow | Rana Sanga House |
+
+## Image Rule
+
+Use only school-approved images or public-domain images that are safe for school election use.
+
+If an image is missing, the app shows a clean fallback image and continues working.
+
+## Current Status
+
+- House hero images: Ready
+- House logos: Ready
+- Real election backend: Firestore Live Backend
