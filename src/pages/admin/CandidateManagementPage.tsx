@@ -1,11 +1,11 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { CheckCircle2, ImagePlus, Pencil, Plus, Save, ShieldX, Trash2, Upload, UserRoundX, X } from 'lucide-react'
 import { CandidateAvatar } from '../../components/candidates/CandidateAvatar'
 import { HouseBadge } from '../../components/house/HouseBadge'
 import { Button, Card, Eyebrow, Field, Select, StatusPill, TextInput } from '../../components/ui/primitives'
 import { ClassSectionInput } from '../../components/ui/ClassSectionInput'
 import { SUPPORTED_POSTS, getElectionPost, getPostLabel } from '../../data/electionPosts'
-import { getCandidates, saveCandidate, toggleCandidate } from '../../lib/electionStore'
+import { getCandidates, saveCandidate, toggleCandidate } from '../../services/electionService'
 import { compressImageFile } from '../../lib/imageUpload'
 import { houses } from '../../lib/houses'
 import { cn } from '../../lib/utils'
@@ -22,17 +22,40 @@ const blankCandidate: Partial<Candidate> = {
 }
 
 export function CandidateManagementPage() {
-  const [candidates, setCandidates] = useState(() => getCandidates())
+  const [candidates, setCandidates] = useState<Candidate[]>([])
   const [form, setForm] = useState<Partial<Candidate>>(blankCandidate)
   const [message, setMessage] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [filter, setFilter] = useState<'all' | ElectionPostId>('all')
   const [search, setSearch] = useState('')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  function refresh() {
-    setCandidates(getCandidates())
+  async function refresh() {
+    try {
+      setCandidates(await getCandidates())
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Could not load candidates.')
+    }
   }
+
+  useEffect(() => {
+    let active = true
+    getCandidates()
+      .then((nextCandidates) => {
+        if (!active) return
+        setCandidates(nextCandidates)
+        setLoadError('')
+      })
+      .catch((error) => {
+        if (!active) return
+        setLoadError(error instanceof Error ? error.message : 'Could not load candidates.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   function resetForm() {
     setForm(blankCandidate)
@@ -40,13 +63,13 @@ export function CandidateManagementPage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  function handleSave(event?: React.FormEvent) {
+  async function handleSave(event?: React.FormEvent) {
     event?.preventDefault()
     if (!form.name?.trim() || !form.classSection?.trim() || !form.postId) {
       setMessage('Please fill name, class & section, and post.')
       return
     }
-    saveCandidate({
+    await saveCandidate({
       id: form.id,
       name: form.name.trim(),
       classSection: form.classSection.trim(),
@@ -60,7 +83,7 @@ export function CandidateManagementPage() {
       active: form.active ?? true,
     })
     resetForm()
-    refresh()
+    await refresh()
   }
 
   async function handlePhotoFile(event: ChangeEvent<HTMLInputElement>) {
@@ -85,8 +108,8 @@ export function CandidateManagementPage() {
     if (!file) return
     try {
       const dataUrl = await compressImageFile(file)
-      saveCandidate({ ...candidate, photoUrl: dataUrl })
-      refresh()
+      await saveCandidate({ ...candidate, photoUrl: dataUrl })
+      await refresh()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not process this image.')
     }
@@ -111,6 +134,11 @@ export function CandidateManagementPage() {
       <p className="mt-2 max-w-2xl text-sm leading-6 text-vpps-mute">
         Approved and active candidates appear on the voting screen. Upload photos directly — no file renaming required.
       </p>
+      {loadError ? (
+        <Card className="mt-5 border-red-100 bg-red-50 text-sm font-semibold text-red-700">
+          {loadError}
+        </Card>
+      ) : null}
 
       <form onSubmit={handleSave} className="mt-6">
         <Card className="overflow-hidden p-0">
@@ -362,8 +390,7 @@ export function CandidateManagementPage() {
                   variant="secondary"
                   size="sm"
                   onClick={() => {
-                    toggleCandidate(candidate.id, 'approved')
-                    refresh()
+                    void toggleCandidate(candidate.id, 'approved').then(refresh)
                   }}
                 >
                   {candidate.approved ? <ShieldX size={14} /> : <CheckCircle2 size={14} />}
@@ -374,8 +401,7 @@ export function CandidateManagementPage() {
                   variant="secondary"
                   size="sm"
                   onClick={() => {
-                    toggleCandidate(candidate.id, 'active')
-                    refresh()
+                    void toggleCandidate(candidate.id, 'active').then(refresh)
                   }}
                 >
                   <UserRoundX size={14} />

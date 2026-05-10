@@ -7,32 +7,49 @@ service cloud.firestore {
         && request.auth.token.email == 'raj@vpps.co.in';
     }
 
-    // Admin screens require Firebase Google Sign-In and the app also restricts
-    // access to raj@vpps.co.in. These rules mirror that allowlist for future
-    // Firestore-backed admin tools.
+    function votingIsOpen() {
+      return get(/databases/$(database)/documents/elections/current).data.status == 'voting_open';
+    }
+
     match /elections/{electionId} {
-      allow read, write: if approvedAdmin();
+      allow read: if true;
+      allow write: if approvedAdmin();
     }
 
     match /candidates/{candidateId} {
-      allow read, write: if approvedAdmin();
+      allow read: if true;
+      allow write: if approvedAdmin();
     }
 
     match /voters/{voterId} {
-      allow read, write: if approvedAdmin();
+      // Public voter lookup is needed for the 6-digit Voting ID flow.
+      // Admin management remains restricted to the approved Google account.
+      allow read: if true;
+      allow create, delete: if approvedAdmin();
+      allow update: if approvedAdmin()
+        || (
+          votingIsOpen()
+          && resource.data.active == true
+          && resource.data.hasVoted == false
+          && request.resource.data.hasVoted == true
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['hasVoted', 'votedAt'])
+        );
     }
 
     match /votes/{voteId} {
-      allow read, write: if approvedAdmin();
+      // Vote records intentionally contain no voter name, Voting ID, or voter id.
+      allow read, update, delete: if approvedAdmin();
+      allow create: if votingIsOpen()
+        && request.resource.data.keys().hasOnly(['id', 'electionId', 'postId', 'candidateId', 'createdAt'])
+        && !('voterName' in request.resource.data)
+        && !('votingId' in request.resource.data)
+        && !('voterId' in request.resource.data);
     }
 
     match /adminUsers/{adminUserId} {
       allow read, write: if approvedAdmin();
     }
 
-    // The voter flow still uses app-level 6-digit Voting ID logic in localStorage.
-    // Do not add public vote writes until final live vote-write rules are tested
-    // before election day.
     match /{document=**} {
       allow read, write: if false;
     }

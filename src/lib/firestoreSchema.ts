@@ -30,7 +30,9 @@ export interface FirestoreCandidate {
   postLabel?: string
   house?: HouseId
   captainGender?: CaptainGender
+  category?: string
   photoUrl?: string
+  imageUrl?: string
   symbol?: string
   slogan?: string
   approved: boolean
@@ -56,7 +58,6 @@ export interface FirestoreVote {
   id: string
   electionId: string
   postId: ElectionPostId
-  post?: string
   candidateId: string
-  timestamp: string
+  createdAt: string
 }

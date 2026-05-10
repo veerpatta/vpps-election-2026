@@ -9,10 +9,10 @@ import { ScreenFitShell } from '../../components/layout/ScreenFitShell'
 import { CandidateCard } from '../../components/voter/CandidateCard'
 import { Button, Card, Eyebrow, PageBackground } from '../../components/ui/primitives'
 import { useEdgeAutoScroll } from '../../hooks/useEdgeAutoScroll'
-import { getBallotPosts, getVotingCandidates, submitVote, validateVotingId } from '../../lib/electionStore'
+import { getBallotPosts, getVotingCandidates, submitVote, validateVotingId } from '../../services/electionService'
 import { cn } from '../../lib/utils'
 import { houseOrder, getHouseMeta } from '../../lib/houses'
-import type { ElectionPostId, Voter as VoterRecord } from '../../types/election'
+import type { Candidate, ElectionPostId, Voter as VoterRecord } from '../../types/election'
 
 type Step = 'welcome' | 'id' | 'confirm' | 'select' | 'review' | 'thanks'
 
@@ -117,6 +117,9 @@ export function VotePage() {
   const [postIndex, setPostIndex] = useState(0)
   const [selected, setSelected] = useState<Partial<Record<ElectionPostId, string>>>({})
   const [voter, setVoter] = useState<VoterRecord | null>(null)
+  const [votingCandidates, setVotingCandidates] = useState<Candidate[]>([])
+  const [isCheckingId, setIsCheckingId] = useState(false)
+  const [isSubmittingVote, setIsSubmittingVote] = useState(false)
 
   const candidatePanelRef = useRef<HTMLDivElement | null>(null)
   useEdgeAutoScroll(candidatePanelRef, {
@@ -138,11 +141,14 @@ export function VotePage() {
   const currentPost = ballotPosts[postIndex]
   const currentHouse = currentPost?.kind === 'house' ? currentPost.house : undefined
   const currentHouseMeta = currentHouse ? getHouseMeta(currentHouse) : undefined
-  const candidates = useMemo(() => (currentPost ? getVotingCandidates(currentPost.id) : []), [currentPost])
+  const candidates = useMemo(
+    () => (currentPost ? votingCandidates.filter((candidate) => candidate.postId === currentPost.id) : []),
+    [currentPost, votingCandidates],
+  )
   const selectedCandidate = currentPost ? candidates.find((candidate) => candidate.id === selected[currentPost.id]) : undefined
   const selectedRows = ballotPosts.map((post) => ({
     post,
-    candidate: getVotingCandidates(post.id).find((candidate) => candidate.id === selected[post.id]),
+    candidate: votingCandidates.find((candidate) => candidate.postId === post.id && candidate.id === selected[post.id]),
   }))
 
   function resetFlow() {
@@ -152,20 +158,30 @@ export function VotePage() {
     setPostIndex(0)
     setSelected({})
     setVoter(null)
+    setVotingCandidates([])
   }
 
-  function handleIdSubmit(event?: FormEvent) {
+  async function handleIdSubmit(event?: FormEvent) {
     event?.preventDefault()
-    const result = validateVotingId(votingId)
-    if (!result.ok) {
-      setMessage(result.message)
-      return
+    try {
+      setIsCheckingId(true)
+      const result = await validateVotingId(votingId)
+      if (!result.ok) {
+        setMessage(result.message)
+        return
+      }
+      const activeCandidates = await getVotingCandidates()
+      setVotingCandidates(activeCandidates)
+      setMessage('')
+      setVoter(result.voter)
+      setPostIndex(0)
+      setSelected({})
+      setStep('confirm')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Please try again.')
+    } finally {
+      setIsCheckingId(false)
     }
-    setMessage('')
-    setVoter(result.voter)
-    setPostIndex(0)
-    setSelected({})
-    setStep('confirm')
   }
 
   function handleNextPost(event?: FormEvent) {
@@ -180,8 +196,9 @@ export function VotePage() {
     else setPostIndex((value) => value + 1)
   }
 
-  function handleSubmitFinalVote(event?: FormEvent) {
+  async function handleSubmitFinalVote(event?: FormEvent) {
     event?.preventDefault()
+    if (isSubmittingVote) return
     const complete = ballotPosts.every((post) => Boolean(selected[post.id]))
     if (!complete) {
       setMessage('Please complete every post before submitting your vote.')
@@ -189,11 +206,14 @@ export function VotePage() {
       return
     }
     try {
-      submitVote(votingId, selected)
+      setIsSubmittingVote(true)
+      await submitVote(votingId, selected)
       setStep('thanks')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Please try again.')
       setStep('id')
+    } finally {
+      setIsSubmittingVote(false)
     }
   }
 
@@ -212,7 +232,7 @@ export function VotePage() {
       if (step === 'welcome') setStep('id')
       else if (step === 'confirm') setStep('select')
       else if (step === 'select') handleNextPost()
-      else if (step === 'review') handleSubmitFinalVote()
+      else if (step === 'review') void handleSubmitFinalVote()
       else if (step === 'thanks') resetFlow()
     }
     window.addEventListener('keydown', onKey)
@@ -289,10 +309,10 @@ export function VotePage() {
                     <Button
                       type="submit"
                       form="vote-id-form"
-                      disabled={votingId.length !== 6}
+                      disabled={votingId.length !== 6 || isCheckingId}
                       className="flex-1 sm:ml-auto sm:flex-none"
                     >
-                      Continue
+                      {isCheckingId ? 'Checking...' : 'Continue'}
                       <ArrowRight size={16} />
                     </Button>
                   </FooterBar>
@@ -535,8 +555,8 @@ export function VotePage() {
                       <ArrowLeft size={16} />
                       Change
                     </Button>
-                    <Button type="submit" form="vote-review-form" className="flex-1 sm:ml-auto sm:flex-none">
-                      Submit Final Vote
+                    <Button type="submit" form="vote-review-form" disabled={isSubmittingVote} className="flex-1 sm:ml-auto sm:flex-none">
+                      {isSubmittingVote ? 'Saving Vote...' : 'Submit Final Vote'}
                       <Check size={16} />
                     </Button>
                   </FooterBar>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Lock, Printer, Trophy } from 'lucide-react'
 import { BrandHeader } from '../../components/brand/BrandHeader'
@@ -6,10 +6,10 @@ import { BrandLogo } from '../../components/brand/BrandLogo'
 import { HouseBadge } from '../../components/house/HouseBadge'
 import { HouseLogo } from '../../components/house/HouseLogo'
 import { Button, Card, StatusPill } from '../../components/ui/primitives'
-import { exportResultsCsv, getElection, getResults } from '../../lib/electionStore'
+import { exportResultsCsv, getElection, getResults } from '../../services/electionService'
 import { houseOrder, houses } from '../../lib/houses'
 import { assetPath, formatStatus } from '../../lib/utils'
-import type { PostResult } from '../../types/election'
+import type { Election, PostResult } from '../../types/election'
 
 function ResultCard({ result, compact = false }: { result: PostResult; compact?: boolean }) {
   const house = result.post.kind === 'house' ? result.post.house : undefined
@@ -75,8 +75,27 @@ function ResultCard({ result, compact = false }: { result: PostResult; compact?:
 }
 
 export function ResultsPage() {
-  const [election] = useState(() => getElection())
-  const results = useMemo(() => getResults(), [])
+  const [election, setElection] = useState<Election | null>(null)
+  const [results, setResults] = useState<PostResult[]>([])
+  const [loadError, setLoadError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    Promise.all([getElection(), getResults()])
+      .then(([nextElection, nextResults]) => {
+        if (!active) return
+        setElection(nextElection)
+        setResults(nextResults)
+      })
+      .catch((error) => {
+        if (!active) return
+        setLoadError(error instanceof Error ? error.message : 'Could not load election results.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   const generalResults = useMemo(() => results.filter((result) => result.post.kind === 'general'), [results])
   const houseResultsByHouse = useMemo(
     () => houseOrder.map((house) => ({
@@ -85,8 +104,18 @@ export function ResultsPage() {
     })),
     [results],
   )
-  const canShowResults = election.status === 'voting_closed' || election.status === 'results_published'
+  const canShowResults = election?.status === 'voting_closed' || election?.status === 'results_published'
   const resultDate = useMemo(() => new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }), [])
+
+  if (!election) {
+    return (
+      <section className="px-4 py-6 sm:px-8 lg:px-10">
+        <Card className={`text-sm font-semibold ${loadError ? 'text-red-700' : 'text-vpps-mute'}`}>
+          {loadError || 'Loading election results...'}
+        </Card>
+      </section>
+    )
+  }
 
   return (
     <section className="px-4 py-6 sm:px-8 lg:px-10">
@@ -109,7 +138,7 @@ export function ResultsPage() {
       ) : (
         <div className="print-area mt-8">
           <div className="no-print mb-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" onClick={exportResultsCsv}><Trophy size={18} />Download Result</Button>
+            <Button type="button" variant="secondary" onClick={() => void exportResultsCsv()}><Trophy size={18} />Download Result</Button>
             <Button type="button" onClick={() => window.print()}><Printer size={18} />Print Result Sheet</Button>
           </div>
           <div className="mb-6 rounded-3xl border border-vpps-navy/10 bg-white p-5 text-center shadow-soft print:border-0 print:p-0 print:shadow-none">

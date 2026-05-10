@@ -1,8 +1,8 @@
 # VPPS Student Council Election 2026
 
-Frontend prototype for Shri Veer Patta Senior Secondary School / Veer Patta School student council voting.
+Frontend app for Shri Veer Patta Senior Secondary School / Veer Patta School student council voting.
 
-The voter flow currently uses mock data and browser storage. Firebase Auth is used for the admin login when `.env.local` contains the Firebase web app config.
+Live election data uses Firebase Firestore when the Vite Firebase environment values are present. If Firebase is not configured, the app falls back to demo browser storage only and admin screens show that warning clearly.
 
 ## Tech Stack
 
@@ -292,7 +292,7 @@ GitHub Pages builds need Firebase Vite environment values if admin login should 
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 
-Do not commit `.env.local`. If these secrets are missing, the deployed voter flow can still load, but admin login will show the Firebase setup-needed message.
+Do not commit `.env.local`. If these secrets are missing, the deployed app uses **Demo Browser Storage**, which is only for testing and is not valid for a real election.
 
 ## Firebase Console Checklist
 
@@ -325,11 +325,43 @@ Do not commit `.env.local`. If these secrets are missing, the deployed voter flo
 
 Confirm the Firestore location before creating the first database. The location choice is permanent. Use the nearest India region if available in Firebase Console.
 
-For now, the voter flow still uses localStorage and 6-digit Voting IDs. Firestore rules are prepared conservatively:
+The live app uses these collections:
 
-- Signed-in Firebase admins can manage future election collections.
-- Public vote writes are not open yet.
-- Final live voting rules need testing before election day.
+- `elections/current`
+- `voters/{voterId}`
+- `candidates/{candidateId}`
+- `votes/{voteId}`
+
+Admin access is restricted to Google login for `raj@vpps.co.in`. Public voters can use the 6-digit Voting ID flow without Google login. Vote documents do not store voter name, Voting ID, or voter id.
+
+## Live Voting Data
+
+There are two storage modes:
+
+- **Firestore Live Backend**: real election mode. Votes, voter `hasVoted` state, turnout, and results are shared across browsers and devices.
+- **Demo Browser Storage**: local testing only. Votes stay inside one browser profile and are not shared with incognito, another browser, another device, or another deployed domain.
+
+Do not run the real election until admin shows **Data Mode: Firestore Live Backend** and the following checks pass:
+
+1. Seed or import voters and candidates into Firestore.
+2. Open normal browser and vote using a test ID such as `111111`.
+3. Open incognito/private browser and try the same ID.
+4. Confirm it says the Voting ID has already been used.
+5. Check another browser/device if available.
+6. Confirm admin dashboard turnout updates from Firestore.
+7. Close voting in admin and confirm the public voter page blocks voting.
+8. Reopen voting only if needed and test with an unused test ID.
+
+GitHub Pages production builds require these repository secrets so the deployed site connects to Firestore:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+
+The current client transaction re-reads the voter document, checks `hasVoted === false`, writes vote documents, and updates the voter to `hasVoted: true` with `votedAt` in the same Firestore transaction. Firestore rules also block vote documents from containing voter identity fields. A callable Cloud Function would be stronger for public write validation, but this version prioritizes reliable shared voting state with the existing static GitHub Pages app.
 
 ## Brand Assets
 
@@ -400,7 +432,7 @@ The summary report is written to `exports/candidate-processing-summary.md`.
   - `candidates`
   - `voters`
   - `votes`
-- Replace localStorage service with Firebase service
+- Confirm Firestore service is active in admin data mode
 
 ### Phase 3: Real Data Setup
 
@@ -456,5 +488,5 @@ Test:
 ## Current Limitations
 
 - Admin login uses Firebase Google Sign-In and only allows `raj@vpps.co.in`.
-- Data is stored in localStorage only.
-- Firestore and Hosting are prepared but not connected to live production voting data.
+- Public vote submission is handled by the client Firestore transaction, not a callable Cloud Function.
+- Demo Browser Storage remains available only when Firebase config is missing and must not be used for the real election.

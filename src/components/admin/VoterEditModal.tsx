@@ -4,7 +4,7 @@ import { Button, Field, Select, StatusPill, TextInput } from '../ui/primitives'
 import { ClassSectionInput } from '../ui/ClassSectionInput'
 import { Modal } from '../ui/Modal'
 import { houseOrder, houses, normalizeHouse } from '../../lib/houses'
-import { generateVotingId, resetVoterForDemo, saveVoter, toggleVoterActive } from '../../lib/electionStore'
+import { generateVotingId, resetVoterForDemo, saveVoter, toggleVoterActive } from '../../services/electionService'
 import type { HouseId, Voter, VoterType } from '../../types/election'
 
 interface VoterEditModalProps {
@@ -19,13 +19,14 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(voter ?? {})
     setError('')
   }, [voter, open])
 
   if (!voter) return null
 
-  function handleSubmit(event?: FormEvent) {
+  async function handleSubmit(event?: FormEvent) {
     event?.preventDefault()
     if (!form.voterName?.trim()) return setError('Voter name is required.')
     if (!form.voterType) return setError('Voter type is required.')
@@ -36,7 +37,7 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
       return setError('Students must have a specific house assigned.')
     }
 
-    saveVoter({
+    await saveVoter({
       id: form.id,
       voterName: form.voterName.trim(),
       voterType: form.voterType,
@@ -140,7 +141,11 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => setForm((value) => ({ ...value, votingId: generateVotingId() }))}
+                onClick={() => {
+                  void generateVotingId().then((votingId) => {
+                    setForm((value) => ({ ...value, votingId }))
+                  })
+                }}
                 title="Generate a fresh Voting ID"
               >
                 <RefreshCcw size={14} />
@@ -171,7 +176,7 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
               variant="secondary"
               size="sm"
               onClick={() => {
-                toggleVoterActive(voter.id)
+                void toggleVoterActive(voter.id)
                 setForm((value) => ({ ...value, active: !value.active }))
                 onSaved()
               }}
@@ -185,7 +190,7 @@ export function VoterEditModal({ open, voter, onClose, onSaved }: VoterEditModal
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  resetVoterForDemo(voter.id)
+                  void resetVoterForDemo(voter.id)
                   setForm((value) => ({ ...value, hasVoted: false, votedAt: undefined }))
                   onSaved()
                 }}

@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, ListChecks, LogOut, Power, Trophy, Users, Vote } from 'lucide-react'
 import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/utils'
+import { dataMode } from '../../services/electionService'
 import { BrandLogo } from '../brand/BrandLogo'
 
 const navItems = [
@@ -52,6 +53,15 @@ export function AdminShell() {
           })}
         </nav>
         <div className="mt-auto grid gap-2">
+          <div
+            className={cn(
+              'rounded-2xl px-3 py-2 text-xs font-bold ring-1',
+              dataMode.isLive ? 'bg-emerald-400/10 text-emerald-100 ring-emerald-300/20' : 'bg-orange-400/10 text-orange-100 ring-orange-300/25',
+            )}
+          >
+            <p>Data Mode: {dataMode.label}</p>
+            <p className="mt-1 font-medium opacity-75">{dataMode.warning}</p>
+          </div>
           <button type="button" onClick={() => navigate('/vote')} className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-white/75 hover:bg-white/10 hover:text-white">
             <Power size={18} />
             Voting Screen
@@ -66,10 +76,13 @@ export function AdminShell() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <BrandLogo variant="icon" className="h-12 w-12" showFallbackText={false} />
-            <div>
-              <p className="text-sm font-black">Control Room</p>
-              <p className="max-w-44 truncate text-xs text-slate-500">{user?.email}</p>
-            </div>
+          <div>
+            <p className="text-sm font-black">Control Room</p>
+            <p className="max-w-44 truncate text-xs text-slate-500">{user?.email}</p>
+            <p className={cn('mt-1 text-[0.65rem] font-bold', dataMode.isLive ? 'text-emerald-700' : 'text-orange-700')}>
+              Data Mode: {dataMode.label}
+            </p>
+          </div>
           </div>
           <button type="button" onClick={handleLogout} className="rounded-2xl px-3 py-2 text-sm font-black text-vpps-navy hover:bg-vpps-navy/5">
             Logout
@@ -81,6 +94,9 @@ export function AdminShell() {
           <div>
             <p className="text-sm font-black text-vpps-navy">Election Control Room</p>
             <p className="text-xs font-semibold text-slate-500">{user?.email}</p>
+            <p className={cn('mt-1 text-[0.7rem] font-bold', dataMode.isLive ? 'text-emerald-700' : 'text-orange-700')}>
+              Data Mode: {dataMode.label} · {dataMode.warning}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => navigate('/vote')} className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-vpps-richGold/40 bg-white px-4 text-sm font-bold text-vpps-navy shadow-sm hover:border-vpps-richGold">

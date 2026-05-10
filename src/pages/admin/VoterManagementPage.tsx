@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import {
   Download,
   FileSpreadsheet,
@@ -25,7 +25,7 @@ import {
   resetVoterForDemo,
   saveVoter,
   toggleVoterActive,
-} from '../../lib/electionStore'
+} from '../../services/electionService'
 import { houseOrder, houses, normalizeHouse } from '../../lib/houses'
 import { importRowsToVoters, previewVoterImport, type VoterImportPreview } from '../../lib/voterImport'
 import type { HouseId, Voter, VoterType } from '../../types/election'
@@ -46,7 +46,7 @@ type VoterTypeFilter = 'all' | VoterType
 type HouseFilter = 'all' | HouseId
 
 export function VoterManagementPage() {
-  const [voters, setVoters] = useState(() => getVoters())
+  const [voters, setVoters] = useState<Voter[]>([])
   const [form, setForm] = useState<Partial<Voter>>(blankVoter)
   const [addError, setAddError] = useState('')
   const [typeFilter, setTypeFilter] = useState<VoterTypeFilter>('all')
@@ -54,6 +54,7 @@ export function VoterManagementPage() {
   const [search, setSearch] = useState('')
   const [preview, setPreview] = useState<VoterImportPreview | null>(null)
   const [importMessage, setImportMessage] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [editing, setEditing] = useState<Voter | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -78,11 +79,33 @@ export function VoterManagementPage() {
     })
   }, [houseFilter, search, typeFilter, voters])
 
-  function refresh() {
-    setVoters(getVoters())
+  async function refresh() {
+    try {
+      setVoters(await getVoters())
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Could not load voters.')
+    }
   }
 
-  function handleAdd(event?: FormEvent) {
+  useEffect(() => {
+    let active = true
+    getVoters()
+      .then((nextVoters) => {
+        if (!active) return
+        setVoters(nextVoters)
+        setLoadError('')
+      })
+      .catch((error) => {
+        if (!active) return
+        setLoadError(error instanceof Error ? error.message : 'Could not load voters.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  async function handleAdd(event?: FormEvent) {
     event?.preventDefault()
     if (!form.voterName?.trim()) return setAddError('Please enter a voter name.')
     if (!form.voterType) return setAddError('Please choose Student or Teacher.')
@@ -93,7 +116,7 @@ export function VoterManagementPage() {
       return setAddError('Students must have a specific house assigned.')
     }
 
-    saveVoter({
+    await saveVoter({
       voterName: form.voterName.trim(),
       voterType: form.voterType,
       classSection: form.classSection?.trim() || undefined,
@@ -106,7 +129,7 @@ export function VoterManagementPage() {
     })
     setAddError('')
     setForm(blankVoter)
-    refresh()
+    await refresh()
   }
 
   async function handleFile(file?: File) {
@@ -116,15 +139,15 @@ export function VoterManagementPage() {
     setPreview(nextPreview)
   }
 
-  function handleImportValidVoters() {
+  async function handleImportValidVoters() {
     if (!preview) return
     const validVoters = importRowsToVoters(preview.rows)
-    importVoters(validVoters)
+    await importVoters(validVoters)
     setPreview(null)
     setImportMessage(
       `${validVoters.length} voter${validVoters.length === 1 ? '' : 's'} imported with generated Voting IDs.`,
     )
-    refresh()
+    await refresh()
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -138,6 +161,11 @@ export function VoterManagementPage() {
         <p className="mt-2 max-w-2xl text-sm leading-6 text-vpps-mute">
           Students and teachers use the same simple 6-digit Voting ID. Click any voter to edit details directly.
         </p>
+        {loadError ? (
+          <Card className="mt-5 border-red-100 bg-red-50 text-sm font-semibold text-red-700">
+            {loadError}
+          </Card>
+        ) : null}
       </div>
 
       <form onSubmit={handleAdd} className="no-print">
@@ -215,7 +243,11 @@ export function VoterManagementPage() {
                   type="button"
                   variant="secondary"
                   size="sm"
-                  onClick={() => setForm({ ...form, votingId: generateVotingId() })}
+                  onClick={() => {
+                    void generateVotingId(voters.map((voter) => voter.votingId)).then((votingId) => {
+                      setForm((value) => ({ ...value, votingId }))
+                    })
+                  }}
                   title="Generate a fresh Voting ID"
                 >
                   <RefreshCcw size={14} />
@@ -253,7 +285,7 @@ export function VoterManagementPage() {
             <p className="mt-1 text-xs font-medium text-vpps-mute">Upload Excel/CSV, preview validation, then import only after review.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={downloadVoterTemplateCsv}>
+            <Button type="button" variant="secondary" size="sm" onClick={() => void downloadVoterTemplateCsv()}>
               <Download size={14} />
               Template
             </Button>
@@ -261,7 +293,7 @@ export function VoterManagementPage() {
               <Upload size={14} />
               Upload Excel
             </Button>
-            <Button type="button" variant="secondary" size="sm" onClick={() => exportVotingIdListCsv(filteredVoters)}>
+            <Button type="button" variant="secondary" size="sm" onClick={() => void exportVotingIdListCsv(filteredVoters)}>
               <FileSpreadsheet size={14} />
               Export Voting IDs
             </Button>
@@ -324,7 +356,7 @@ export function VoterManagementPage() {
                 <X size={14} />
                 Cancel
               </Button>
-              <Button type="button" size="sm" disabled={preview.validRows === 0} onClick={handleImportValidVoters}>
+              <Button type="button" size="sm" disabled={preview.validRows === 0} onClick={() => void handleImportValidVoters()}>
                 <Upload size={14} />
                 Import valid voters
               </Button>
@@ -437,8 +469,7 @@ export function VoterManagementPage() {
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  toggleVoterActive(voter.id)
-                  refresh()
+                  void toggleVoterActive(voter.id).then(refresh)
                 }}
               >
                 {voter.active ? 'Inactive' : 'Active'}
@@ -449,8 +480,7 @@ export function VoterManagementPage() {
                   variant="secondary"
                   size="sm"
                   onClick={() => {
-                    resetVoterForDemo(voter.id)
-                    refresh()
+                    void resetVoterForDemo(voter.id).then(refresh)
                   }}
                   title="Reset voted status"
                 >

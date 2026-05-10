@@ -38,6 +38,7 @@ export function CandidateAvatar({
   const [failedImageUrl, setFailedImageUrl] = useState<string>()
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFailedImageUrl(undefined)
   }, [imageUrl])
 

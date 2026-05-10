@@ -3,9 +3,10 @@ import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { CheckCircle2, Clock3, GraduationCap, Shield, Trophy, UserCheck, Users, Vote } from 'lucide-react'
 import { HouseShowcase } from '../../components/house/HouseShowcase'
 import { Card, StatusPill } from '../../components/ui/primitives'
-import { getDashboardStats, getHouseStats } from '../../lib/electionStore'
+import { getDashboardStats, getHouseStats } from '../../services/electionService'
 import { houses } from '../../lib/houses'
 import { formatStatus } from '../../lib/utils'
+import type { DashboardStats, HouseStats } from '../../services/types'
 
 function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
   const motionValue = useMotionValue(0)
@@ -18,8 +19,37 @@ function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
 }
 
 export function DashboardPage() {
-  const [stats] = useState(() => getDashboardStats())
-  const [houseStats] = useState(() => getHouseStats())
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [houseStats, setHouseStats] = useState<HouseStats[]>([])
+  const [loadError, setLoadError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    Promise.all([getDashboardStats(), getHouseStats()])
+      .then(([nextStats, nextHouseStats]) => {
+        if (!active) return
+        setStats(nextStats)
+        setHouseStats(nextHouseStats)
+      })
+      .catch((error) => {
+        if (!active) return
+        setLoadError(error instanceof Error ? error.message : 'Could not load election dashboard.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (!stats) {
+    return (
+      <section className="px-4 py-6 sm:px-8 lg:px-10">
+        <Card className={`text-sm font-semibold ${loadError ? 'text-red-700' : 'text-vpps-mute'}`}>
+          {loadError || 'Loading election dashboard...'}
+        </Card>
+      </section>
+    )
+  }
+
   const cards = [
     { label: 'Voting Status', value: formatStatus(stats.election.status), icon: Shield, tone: 'gold' as const },
     { label: 'Total Voters', value: stats.totalVoters, icon: Users },

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, ListRestart, Play, RotateCcw, Trash2, Trophy } from 'lucide-react'
 import { Button, Card, Eyebrow, StatusPill } from '../../components/ui/primitives'
 import {
@@ -6,10 +6,12 @@ import {
   getElection,
   resetDemoData,
   resetElectionRun,
+  seedDemoData,
   updateElectionStatus,
-} from '../../lib/electionStore'
+} from '../../services/electionService'
 import { formatStatus } from '../../lib/utils'
 import type { ElectionStatus } from '../../types/election'
+import type { DashboardStats } from '../../services/types'
 
 function statusTone(status: ElectionStatus) {
   if (status === 'voting_open') return 'green'
@@ -19,20 +21,51 @@ function statusTone(status: ElectionStatus) {
 }
 
 export function VotingControlPage() {
-  const [election, setElection] = useState(() => getElection())
-  const [stats, setStats] = useState(() => getDashboardStats())
+  const [election, setElection] = useState<Awaited<ReturnType<typeof getElection>> | null>(null)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const [confirmReset, setConfirmReset] = useState<'none' | 'run' | 'demo'>('none')
   const [feedback, setFeedback] = useState<string>('')
+  const [loadError, setLoadError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  function refresh() {
-    setElection(getElection())
-    setStats(getDashboardStats())
+  async function refresh() {
+    try {
+      const [nextElection, nextStats] = await Promise.all([getElection(), getDashboardStats()])
+      setElection(nextElection)
+      setStats(nextStats)
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Could not load election controls.')
+    }
   }
 
-  function applyStatus(status: ElectionStatus) {
-    setElection(updateElectionStatus(status))
-    setStats(getDashboardStats())
-    setFeedback('')
+  useEffect(() => {
+    let active = true
+    Promise.all([getElection(), getDashboardStats()])
+      .then(([nextElection, nextStats]) => {
+        if (!active) return
+        setElection(nextElection)
+        setStats(nextStats)
+        setLoadError('')
+      })
+      .catch((error) => {
+        if (!active) return
+        setLoadError(error instanceof Error ? error.message : 'Could not load election controls.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  async function applyStatus(status: ElectionStatus) {
+    setBusy(true)
+    try {
+      setElection(await updateElectionStatus(status))
+      setStats(await getDashboardStats())
+      setFeedback('')
+    } finally {
+      setBusy(false)
+    }
   }
 
   function closeVoting() {
@@ -41,29 +74,63 @@ export function VotingControlPage() {
     }
   }
 
-  function performResetRun() {
-    resetElectionRun()
-    refresh()
-    setConfirmReset('none')
-    setFeedback('Election state reset. Every voter is back to "not voted" and votes were cleared. Voter and candidate lists are unchanged.')
+  async function performResetRun() {
+    setBusy(true)
+    try {
+      await resetElectionRun()
+      await refresh()
+      setConfirmReset('none')
+      setFeedback('Election state reset. Every voter is back to "not voted" and votes were cleared. Voter and candidate lists are unchanged.')
+    } finally {
+      setBusy(false)
+    }
   }
 
-  function performResetDemo() {
-    resetDemoData()
-    refresh()
-    setConfirmReset('none')
-    setFeedback('Wiped to demo defaults. The official voter roster has been reseeded; admin-added voters or candidates were removed.')
+  async function performResetDemo() {
+    setBusy(true)
+    try {
+      await resetDemoData()
+      await refresh()
+      setConfirmReset('none')
+      setFeedback('Wiped to demo defaults. The official voter roster has been reseeded; admin-added voters or candidates were removed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function performSeedFirestore() {
+    if (!window.confirm('Seed Firestore with bundled election data? This will not overwrite existing Firestore data.')) return
+    setBusy(true)
+    try {
+      await seedDemoData(false)
+      await refresh()
+      setFeedback('Firestore seeded with bundled election data.')
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'Could not seed Firestore.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const summary = useMemo(
     () => [
-      { label: 'Voters', value: stats.totalVoters },
-      { label: 'Votes cast', value: stats.votesCast },
-      { label: 'Pending', value: stats.pendingVotes },
-      { label: 'Approved candidates', value: stats.approvedCandidates },
+      { label: 'Voters', value: stats?.totalVoters ?? 0 },
+      { label: 'Votes cast', value: stats?.votesCast ?? 0 },
+      { label: 'Pending', value: stats?.pendingVotes ?? 0 },
+      { label: 'Approved candidates', value: stats?.approvedCandidates ?? 0 },
     ],
     [stats],
   )
+
+  if (!election || !stats) {
+    return (
+      <section className="px-4 py-6 sm:px-8 lg:px-10">
+        <Card className={`text-sm font-semibold ${loadError ? 'text-red-700' : 'text-vpps-mute'}`}>
+          {loadError || 'Loading election controls...'}
+        </Card>
+      </section>
+    )
+  }
 
   return (
     <section className="px-4 py-6 sm:px-8 lg:px-10">
@@ -100,15 +167,15 @@ export function VotingControlPage() {
           </div>
         </div>
         <div className="grid gap-2 p-4 sm:grid-cols-3">
-          <Button type="button" onClick={() => applyStatus('voting_open')}>
+          <Button type="button" disabled={busy} onClick={() => void applyStatus('voting_open')}>
             <Play size={16} />
             Open voting
           </Button>
-          <Button type="button" variant="secondary" onClick={closeVoting}>
+          <Button type="button" disabled={busy} variant="secondary" onClick={closeVoting}>
             <CheckCircle2 size={16} />
             Close voting
           </Button>
-          <Button type="button" variant="secondary" onClick={() => applyStatus('results_published')}>
+          <Button type="button" disabled={busy} variant="secondary" onClick={() => void applyStatus('results_published')}>
             <Trophy size={16} />
             Publish results
           </Button>
@@ -148,7 +215,7 @@ export function VotingControlPage() {
                 <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmReset('none')}>
                   Cancel
                 </Button>
-                <Button type="button" variant="danger" size="sm" onClick={performResetRun}>
+                <Button type="button" variant="danger" size="sm" disabled={busy} onClick={() => void performResetRun()}>
                   Yes, reset election state
                 </Button>
               </div>
@@ -178,7 +245,7 @@ export function VotingControlPage() {
                 <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmReset('none')}>
                   Cancel
                 </Button>
-                <Button type="button" variant="danger" size="sm" onClick={performResetDemo}>
+                <Button type="button" variant="danger" size="sm" disabled={busy} onClick={() => void performResetDemo()}>
                   Yes, wipe everything
                 </Button>
               </div>
@@ -189,6 +256,20 @@ export function VotingControlPage() {
               </Button>
             )}
           </div>
+        </div>
+      </Card>
+
+      <Card className="mt-6 border-vpps-navy/10 bg-white">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold tracking-tight text-vpps-navy">Firestore setup</p>
+            <p className="mt-1 text-xs font-medium leading-5 text-vpps-navy/70">
+              Use once only when the live backend is empty. It will stop if Firestore already contains election data.
+            </p>
+          </div>
+          <Button type="button" variant="secondary" disabled={busy} onClick={() => void performSeedFirestore()}>
+            Seed Firestore
+          </Button>
         </div>
       </Card>
 

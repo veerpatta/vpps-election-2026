@@ -12,8 +12,11 @@
     "import:real-candidates": "node scripts/import-real-candidates.mjs",
     "import:official-voters": "node scripts/import-official-voters.mjs",
     "import:house-assets": "node scripts/import-house-assets.mjs",
+    "seed:firestore-live": "tsx scripts/seed-firestore-live.ts",
+    "smoke:firestore-vote": "tsx scripts/smoke-firestore-vote.ts",
     "process:candidates": "node scripts/process-candidates.mjs",
     "verify:election-posts": "node scripts/verify-election-posts.mjs",
+    "test": "vitest run",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -44,8 +47,10 @@
     "globals": "^17.5.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from 'react'
 import { cn } from '../../lib/utils'
 
@@ -71,6 +72,7 @@ export function ClassSectionInput({ value, onChange, className }: ClassSectionIn
       next.stream !== parsed.stream ||
       next.custom !== parsed.custom
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setParsed(next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
